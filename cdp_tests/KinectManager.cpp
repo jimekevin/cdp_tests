@@ -3,6 +3,7 @@
 #include <Kinect.h>
 #include "KinectManager.h"
 #include <opencv2/imgproc.hpp>
+#include <QtGui/QOpenGLBuffer>
 #include <iostream>
 #include <chrono>
 
@@ -11,13 +12,12 @@ int KinectManager::init() {
 		return 1;
 	}
 
-	sensor->get_CoordinateMapper(&coordinateMapper);
+	sensor->get_CoordinateMapper(&mapper);
 	sensor->Open();
 	sensor->OpenMultiSourceFrameReader(
 		FrameSourceTypes::FrameSourceTypes_Depth | FrameSourceTypes::FrameSourceTypes_Color,
 		&reader
 	);
-
 
 	/*IColorFrameSource* colorFrameSource = nullptr;
 	if (FAILED(result)) return 3;
@@ -99,32 +99,45 @@ int KinectManager::init() {
 }*/
 
 
-void KinectManager::getDepthData(IMultiSourceFrame* frame, unsigned int* dest) {
+void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer) {
 	IDepthFrame* depthframe;
 	IDepthFrameReference* frameref = NULL;
+
 	frame->get_DepthFrameReference(&frameref);
 	frameref->AcquireFrame(&depthframe);
 	if (frameref) frameref->Release();
 
-	if (!depthframe) return;
+	if (!depthframe) {
+		return;
+	}
 
 	// Get data from frame
 	unsigned int sz;
 	unsigned short* buf;
-	depthframe->AccessUnderlyingBuffer(&sz, &buf);
+	HRESULT result;
+	result = depthframe->AccessUnderlyingBuffer(&sz, &buf);
+
+	glBuffer->allocate(sz * 3 * sizeof(float));
+	auto dest = glBuffer->mapRange(0, sz * sizeof(float) * 3, QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+	//auto dest = (GLubyte*)glBuffer->map(QOpenGLBuffer::Access::WriteOnly);
 
 	// Write vertex coordinates
-	mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2xyz);
+	result = mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2xyz);
 	float* fdest = (float*)dest;
 	for (int i = 0; i < sz; i++) {
 		*fdest++ = depth2xyz[i].X;
 		*fdest++ = depth2xyz[i].Y;
-		*fdest++ = depth2xyz[i].Z;
+		*fdest++ = 1.0; // depth2xyz[i].Z;
 	}
 
 	// Fill in depth2rgb map
-	mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
-	if (depthframe) depthframe->Release();
+	//mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
+
+	glBuffer->unmap();
+
+	if (depthframe) {
+		depthframe->Release();
+	}
 }
 
 void KinectManager::getRgbData(IMultiSourceFrame* frame, unsigned int* dest) {

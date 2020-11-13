@@ -1,6 +1,8 @@
 #pragma once
 
 #include <Kinect.h>
+#include <opencv2/imgproc.hpp>
+#include <QtGui/QOpenGLBuffer>
 
 #define KM KinectManager::instance()
 
@@ -18,7 +20,7 @@ private:
 	KinectManager() {} // Disallow instantiation outside of the class.
 
 	IKinectSensor *sensor;
-	ICoordinateMapper* mapper; // Converts between depth, color, and 3d coordinates
+	ICoordinateMapper *mapper; // Converts between depth, color, and 3d coordinates
 
 	ColorSpacePoint depth2rgb[WIDTH * HEIGHT];  // Maps depth pixels to rgb pixels
 	CameraSpacePoint depth2xyz[WIDTH * HEIGHT];
@@ -26,7 +28,6 @@ private:
 
 	IColorFrameReader *colorFrameReader;
 	IDepthFrameReader *depthFrameReader;
-	ICoordinateMapper *coordinateMapper;
 
 	int frameCount = 0;
 	long long lastFrameFetch = 0;
@@ -46,6 +47,6 @@ public:
 	int init();
 	//int fetchFrames();
 
-	void getDepthData(IMultiSourceFrame* frame, unsigned int* dest);
+	void getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
 	void getRgbData(IMultiSourceFrame* frame, unsigned int* dest);
 };
