@@ -48,5 +48,5 @@ public:
 	//int fetchFrames();
 
 	void getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
-	void getRgbData(IMultiSourceFrame* frame, unsigned int* dest);
+	void getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
 };

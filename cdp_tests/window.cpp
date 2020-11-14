@@ -69,6 +69,10 @@ void Window::initializeGL()
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+
 	// Cull triangles which normal is not towards the camera = you cannnot go inside objects
 	//glEnable(GL_CULL_FACE);
 
@@ -130,15 +134,11 @@ void Window::resizeGL(int width, int height)
 
 void Window::paintGL()
 {
-	// Clear
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
-	// Render using our shader
 	kinectProgram->bind();
 	{
-		//projection.perspective(FoV, KM.WIDTH / (GLdouble)KM.HEIGHT, 0.1, 100.0);
-		//view.lookAt(position, direction, QVector3D(0, 1, 0));
 		QMatrix4x4 view;
 		view.lookAt(position, position + direction, QVector3D(0, 1, 0));
 		kinectProgram->setUniformValue("view", view);
@@ -146,6 +146,7 @@ void Window::paintGL()
 		QMatrix4x4 projection;
 		projection.perspective(FoV, KM.WIDTH / (GLdouble)KM.HEIGHT, 0.1, 100.0);
 		kinectProgram->setUniformValue("projection", projection);
+
 		m_object.bind();
 		glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube) / sizeof(sg_cube[0]));
 		m_object.release();
@@ -259,21 +260,20 @@ void Window::timerEvent(QTimerEvent *event)
 
 		kinectDepthBuffer.create();
 		kinectDepthBuffer.bind();
-		//kinectDepthBuffer.allocate(KinectManager::WIDTH * KinectManager::HEIGHT * 3 * 4);
-		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw); // StaticDraw
+		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 		KM.getDepthData(frame, &kinectDepthBuffer);
-		//kinectDepthBuffer.allocate(kinectDepthData, sizeof(kinectDepthData));
+		auto depthBufferId = kinectDepthBuffer.bufferId();
 
-		/*rgbBuffer.create();
+		kinectRGBBuffer.create();
 		kinectRGBBuffer.bind();
-		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw); // StaticDraw
-		KM.getRgbData(frame, kinectRGBData);
-		kinectRGBBuffer.allocate(kinectRGBData, sizeof(kinectRGBData));*/
+		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+		KM.getRgbData(frame, &kinectRGBBuffer);
+		auto RGBBufferId = kinectRGBBuffer.bufferId();
 
 		kinectProgram->enableAttributeArray(0);
-		//kinectProgram->enableAttributeArray(1);
-		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 3);
-		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
+		kinectProgram->enableAttributeArray(1);
+		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
+		kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
 
 		// Release (unbind) all
 		kinectVAO.release();

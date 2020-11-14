@@ -105,7 +105,9 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 
 	frame->get_DepthFrameReference(&frameref);
 	frameref->AcquireFrame(&depthframe);
-	if (frameref) frameref->Release();
+	if (frameref) {
+		frameref->Release();
+	}
 
 	if (!depthframe) {
 		return;
@@ -118,7 +120,7 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 	result = depthframe->AccessUnderlyingBuffer(&sz, &buf);
 
 	glBuffer->allocate(sz * 3 * sizeof(float));
-	auto dest = glBuffer->mapRange(0, sz * sizeof(float) * 3, QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+	auto dest = glBuffer->mapRange(0, sz * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
 	//auto dest = (GLubyte*)glBuffer->map(QOpenGLBuffer::Access::WriteOnly);
 
 	// Write vertex coordinates
@@ -131,7 +133,7 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 	}
 
 	// Fill in depth2rgb map
-	//mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
+	mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
 
 	glBuffer->unmap();
 
@@ -140,14 +142,22 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 	}
 }
 
-void KinectManager::getRgbData(IMultiSourceFrame* frame, unsigned int* dest) {
+void KinectManager::getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer) {
 	IColorFrame* colorframe;
 	IColorFrameReference* frameref = NULL;
+
 	frame->get_ColorFrameReference(&frameref);
 	frameref->AcquireFrame(&colorframe);
-	if (frameref) frameref->Release();
+	if (frameref) {
+		frameref->Release();
+	}
 
-	if (!colorframe) return;
+	if (!colorframe) {
+		return;
+	}
+
+	glBuffer->allocate(COLORWIDTH * COLORHEIGHT * sizeof(float));
+	auto dest = glBuffer->mapRange(0, COLORWIDTH * COLORHEIGHT * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
 
 	// Get data from frame
 	colorframe->CopyConvertedFrameDataToArray(COLORWIDTH * COLORHEIGHT * 4, rgbimage, ColorImageFormat_Rgba);
@@ -171,5 +181,7 @@ void KinectManager::getRgbData(IMultiSourceFrame* frame, unsigned int* dest) {
 		// Don't copy alpha channel
 	}
 
-	if (colorframe) colorframe->Release();
+	if (colorframe) {
+		colorframe->Release();
+	}
 }
