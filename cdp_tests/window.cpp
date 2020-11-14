@@ -147,6 +147,8 @@ void Window::initializeGL()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
+	glEnable(GL_DEBUG_OUTPUT);
+
 	// Cull triangles which normal is not towards the camera = you cannnot go inside objects
 	//glEnable(GL_CULL_FACE);
 
@@ -158,6 +160,9 @@ void Window::initializeGL()
 		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/point_cloud.frag");
 		kinectProgram->link();
 
+		attrLocationVertex = kinectProgram->attributeLocation("vertex");
+		attrLocationColor = kinectProgram->attributeLocation("color");
+
 		kinectProgram->bind();
 
 		// Default color
@@ -165,22 +170,24 @@ void Window::initializeGL()
 		kinectProgram->setAttributeValue("color", QVector3D(1.0, 0.0, 0.0));
 
 		// Create Buffer (Do not release until VAO is created)
-		m_vertex.create();
-		m_vertex.bind();
-		m_vertex.setUsagePattern(QOpenGLBuffer::StaticDraw);
-		m_vertex.allocate(sg_cube, sizeof(sg_cube));
+		//m_vertex.create();
+		//m_vertex.bind();
+		//m_vertex.setUsagePattern(QOpenGLBuffer::StaticDraw);
+		//m_vertex.allocate(sg_cube, sizeof(sg_cube));
 
 		// Create Vertex Array Object
-		m_object.create();
-		m_object.bind();
+		//m_object.create();
+		//m_object.bind();
 		kinectProgram->enableAttributeArray(0);
-		//kinectProgram->enableAttributeArray(1);
-		kinectProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
+		kinectProgram->enableAttributeArray(1);
+		//kinectProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
 		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
+		//kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
+		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, 0, 3, 0);
 
 		// Release (unbind) all
-		m_object.release();
-		m_vertex.release();
+		//m_object.release();
+		//m_vertex.release();
 		kinectProgram->release();
 	}
 
@@ -196,8 +203,14 @@ void Window::resizeGL(int width, int height)
 
 void Window::paintGL()
 {
+	GLenum glErr;
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	//glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+
+	if (!kinectDepthBuffer.isCreated()) {
+		return;
+	}
 
 	kinectProgram->bind();
 	{
@@ -235,22 +248,22 @@ void Window::paintGL()
 
 
 		kinectDepthBuffer.bind();
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		glEnableVertexAttribArray(attrLocationVertex);
+		glVertexAttribPointer(attrLocationVertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		
-		//kinectRGBBuffer.bind();
-		//glEnableVertexAttribArray(1);
-		//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		kinectRGBBuffer.bind();
+		glEnableVertexAttribArray(attrLocationColor);
+		glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
 		auto size = kinectDepthBuffer.size();
 		//glDrawArrays(GL_TRIANGLES, 0, kinectDepthBuffer.size());
 		glDrawArrays(GL_POINTS, 0, kinectDepthBuffer.size());
 
-		glDisableVertexAttribArray(0);
-		//glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(attrLocationVertex);
+		glDisableVertexAttribArray(attrLocationColor);
 
 		kinectDepthBuffer.release();
-		//kinectRGBBuffer.release();
+		kinectRGBBuffer.release();
 
 		kinectVAO.release();
 	}
@@ -259,6 +272,7 @@ void Window::paintGL()
 
 void Window::timerEvent(QTimerEvent *event)
 {
+	GLenum glErr;
 	//qDebug() << "Update...";	
 	// New kinect frames arrived
 
@@ -284,22 +298,29 @@ void Window::timerEvent(QTimerEvent *event)
 		size = kinectDepthBuffer.size();
 		//kinectDepthBuffer.allocate(sg_cube_vertices, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0])); 
 
-		//kinectRGBBuffer.create();
-		//kinectRGBBuffer.bind();
-		//kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		//KM.getRgbData(frame, &kinectRGBBuffer);
+		auto result = kinectRGBBuffer.create();
+		result = kinectRGBBuffer.bind();
+		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+		auto size2 = kinectRGBBuffer.size();
+		KM.getRgbData(frame, &kinectRGBBuffer);
+		size2 = kinectRGBBuffer.size();
 		//kinectRGBBuffer.allocate(sg_cube_color, sizeof(sg_cube_color) / sizeof(sg_cube_color[0]));
 
 		kinectProgram->enableAttributeArray(0);
 		kinectProgram->enableAttributeArray(1);
 		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
-		kinectProgram->setAttributeBuffer(1, GL_FLOAT, 0, 3, 0); // Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
+		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0); // Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
 
 		// Release (unbind) all
 		kinectVAO.release();
 		kinectDepthBuffer.release();
 		kinectRGBBuffer.release();
 		kinectProgram->release();
+
+		while ((glErr = glGetError()) != GL_NO_ERROR)
+		{
+			qDebug() << glErr;
+		}
 
 		// Force painting
 		update();

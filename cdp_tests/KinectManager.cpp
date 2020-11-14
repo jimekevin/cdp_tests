@@ -129,7 +129,7 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 	for (int i = 0; i < sz; i++) {
 		*fdest++ = depth2xyz[i].X;
 		*fdest++ = depth2xyz[i].Y;
-		*fdest++ = 1.0; // depth2xyz[i].Z;
+		*fdest++ = depth2xyz[i].Z;
 	}
 
 	// Fill in depth2rgb map
@@ -157,8 +157,8 @@ void KinectManager::getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer
 		return;
 	}
 
-	glBuffer->allocate(COLORWIDTH * COLORHEIGHT * sizeof(float));
-	auto dest = glBuffer->mapRange(0, COLORWIDTH * COLORHEIGHT * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+	glBuffer->allocate(WIDTH * HEIGHT * 3 * sizeof(float));
+	auto dest = glBuffer->mapRange(0, WIDTH * HEIGHT * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
 
 	// Get data from frame
 	colorframe->CopyConvertedFrameDataToArray(COLORWIDTH * COLORHEIGHT * 4, rgbimage, ColorImageFormat_Rgba);

@@ -50,6 +50,9 @@ private:
 	QVector3D up = QVector3D(-0.329425871, 0.904751360, -0.270005584); // QVector3D(0.0, 1.0, 0.0);
 	float FoV = 45.0;
 
+	int attrLocationVertex;
+	int attrLocationColor;
+
 	QPoint mouseStart = QPoint(0.0, 0.0);
 
 	float horizontalAngle = 3.14f;
