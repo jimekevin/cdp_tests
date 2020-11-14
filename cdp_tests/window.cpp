@@ -52,6 +52,83 @@ static const Vertex sg_cube[] = {
 	Vertex(QVector3D(1.0f,-1.0f, 1.0f),  QVector3D(0.982f,  0.099f,  0.879f))
 };
 
+static const GLfloat sg_cube_vertices[] = {
+	-1.0f,-1.0f,-1.0f, // triangle 1 : begin
+	-1.0f,-1.0f, 1.0f,
+	-1.0f, 1.0f, 1.0f, // triangle 1 : end
+	1.0f, 1.0f,-1.0f, // triangle 2 : begin
+	-1.0f,-1.0f,-1.0f,
+	-1.0f, 1.0f,-1.0f, // triangle 2 : end
+	1.0f,-1.0f, 1.0f,
+	-1.0f,-1.0f,-1.0f,
+	1.0f,-1.0f,-1.0f,
+	1.0f, 1.0f,-1.0f,
+	1.0f,-1.0f,-1.0f,
+	-1.0f,-1.0f,-1.0f,
+	-1.0f,-1.0f,-1.0f,
+	-1.0f, 1.0f, 1.0f,
+	-1.0f, 1.0f,-1.0f,
+	1.0f,-1.0f, 1.0f,
+	-1.0f,-1.0f, 1.0f,
+	-1.0f,-1.0f,-1.0f,
+	-1.0f, 1.0f, 1.0f,
+	-1.0f,-1.0f, 1.0f,
+	1.0f,-1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f,-1.0f,-1.0f,
+	1.0f, 1.0f,-1.0f,
+	1.0f,-1.0f,-1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f,-1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f,-1.0f,
+	-1.0f, 1.0f,-1.0f,
+	1.0f, 1.0f, 1.0f,
+	-1.0f, 1.0f,-1.0f,
+	-1.0f, 1.0f, 1.0f,
+	1.0f, 1.0f, 1.0f,
+	-1.0f, 1.0f, 1.0f,
+	1.0f,-1.0f, 1.0f
+};
+static const GLfloat sg_cube_color[] = {
+	0.583f,  0.771f,  0.014f,
+	0.609f,  0.115f,  0.436f,
+	0.327f,  0.483f,  0.844f,
+	0.822f,  0.569f,  0.201f,
+	0.435f,  0.602f,  0.223f,
+	0.310f,  0.747f,  0.185f,
+	0.597f,  0.770f,  0.761f,
+	0.559f,  0.436f,  0.730f,
+	0.359f,  0.583f,  0.152f,
+	0.483f,  0.596f,  0.789f,
+	0.559f,  0.861f,  0.639f,
+	0.195f,  0.548f,  0.859f,
+	0.014f,  0.184f,  0.576f,
+	0.771f,  0.328f,  0.970f,
+	0.406f,  0.615f,  0.116f,
+	0.676f,  0.977f,  0.133f,
+	0.971f,  0.572f,  0.833f,
+	0.140f,  0.616f,  0.489f,
+	0.997f,  0.513f,  0.064f,
+	0.945f,  0.719f,  0.592f,
+	0.543f,  0.021f,  0.978f,
+	0.279f,  0.317f,  0.505f,
+	0.167f,  0.620f,  0.077f,
+	0.347f,  0.857f,  0.137f,
+	0.055f,  0.953f,  0.042f,
+	0.714f,  0.505f,  0.345f,
+	0.783f,  0.290f,  0.734f,
+	0.722f,  0.645f,  0.174f,
+	0.302f,  0.455f,  0.848f,
+	0.225f,  0.587f,  0.040f,
+	0.517f,  0.713f,  0.338f,
+	0.053f,  0.959f,  0.120f,
+	0.393f,  0.621f,  0.362f,
+	0.673f,  0.211f,  0.457f,
+	0.820f,  0.883f,  0.371f,
+	0.982f,  0.099f,  0.879f
+};
+
 /*******************************************************************************
  * OpenGL Events
  ******************************************************************************/
@@ -70,16 +147,8 @@ void Window::initializeGL()
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_COLOR_ARRAY);
-
 	// Cull triangles which normal is not towards the camera = you cannnot go inside objects
 	//glEnable(GL_CULL_FACE);
-
-	//perspectiveGL(45, KM.WIDTH / (GLdouble)KM.HEIGHT, 0.1, 1000);
-
-	//QVector4D uv(xy.x() / m_w * 2 - 1, -(xy.y() / m_h * 2 - 1), 1, 1);
-	//QVector3D sv = m_proj.inverted() * uv;
 
 	// Application-specific initialization
 	{
@@ -91,15 +160,8 @@ void Window::initializeGL()
 
 		kinectProgram->bind();
 
-		// Set transformation
-		//view.lookAt(
-		//	//QVector3D(0, 0, 2), // Camera is at (4,3,3), in World Space
-		//	QVector3D(2, 2, -1),
-		//	QVector3D(0, 0, 0), // and looks at the origin
-		//	QVector3D(0, 1, 0)  // Head is up (set to 0,-1,0 to look upside-down)
-		//);
-		//projection.perspective(45.0, KM.WIDTH / (GLdouble) KM.HEIGHT, 0.1, 100.0);
-
+		// Default color
+		// TODO: Remove
 		kinectProgram->setAttributeValue("color", QVector3D(1.0, 0.0, 0.0));
 
 		// Create Buffer (Do not release until VAO is created)
@@ -112,9 +174,9 @@ void Window::initializeGL()
 		m_object.create();
 		m_object.bind();
 		kinectProgram->enableAttributeArray(0);
-		kinectProgram->enableAttributeArray(1);
+		//kinectProgram->enableAttributeArray(1);
 		kinectProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
-		kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
+		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
 
 		// Release (unbind) all
 		m_object.release();
@@ -135,7 +197,7 @@ void Window::resizeGL(int width, int height)
 void Window::paintGL()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	//glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 	kinectProgram->bind();
 	{
@@ -147,15 +209,104 @@ void Window::paintGL()
 		projection.perspective(FoV, KM.WIDTH / (GLdouble)KM.HEIGHT, 0.1, 100.0);
 		kinectProgram->setUniformValue("projection", projection);
 
-		m_object.bind();
-		glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube) / sizeof(sg_cube[0]));
-		m_object.release();
+		//m_object.bind();
+		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube) / sizeof(sg_cube[0]));
+		//m_object.release();
+
+		kinectVAO.bind();
+		//glEnableClientState(GL_VERTEX_ARRAY);
+		//glEnableClientState(GL_COLOR_ARRAY);
+
+		//kinectDepthBuffer.bind();
+		//glDrawArrays(GL_POINTS, 0, KM.WIDTH * KM.HEIGHT);
+		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0]));
+		//glVertexPointer(3, GL_FLOAT, 0, NULL);
+
+		//kinectRGBBuffer.bind();
+		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube_color) / sizeof(sg_cube_color[0]));
+		//glColorPointer(3, GL_FLOAT, 0, NULL);
+		//glDrawArrays(GL_POINTS, 0, KM.WIDTH * KM.HEIGHT);
+
+		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0]));
+
+		//glDisableClientState(GL_VERTEX_ARRAY);
+		//glDisableClientState(GL_COLOR_ARRAY);
+
+
 
 		kinectDepthBuffer.bind();
+		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		
+		//kinectRGBBuffer.bind();
+		//glEnableVertexAttribArray(1);
+		//glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+		auto size = kinectDepthBuffer.size();
+		//glDrawArrays(GL_TRIANGLES, 0, kinectDepthBuffer.size());
 		glDrawArrays(GL_POINTS, 0, kinectDepthBuffer.size());
+
+		glDisableVertexAttribArray(0);
+		//glDisableVertexAttribArray(1);
+
 		kinectDepthBuffer.release();
+		//kinectRGBBuffer.release();
+
+		kinectVAO.release();
 	}
 	kinectProgram->release();
+}
+
+void Window::timerEvent(QTimerEvent *event)
+{
+	//qDebug() << "Update...";	
+	// New kinect frames arrived
+
+	IMultiSourceFrame* frame = NULL;
+	if (SUCCEEDED(KM.reader->AcquireLatestFrame(&frame))) {
+		//qDebug() << "New frames!";
+
+		kinectProgram->bind();
+
+		// Create Vertex Array Object
+		if (kinectVAO.isCreated()) {
+			kinectVAO.destroy();
+		}
+		kinectVAO.create();
+		kinectVAO.bind();
+
+		//if (kinectDepthBuffer.isCreated()) kinectDepthBuffer.destroy();
+		kinectDepthBuffer.create();
+		kinectDepthBuffer.bind();
+		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+		auto size = kinectDepthBuffer.size();
+		KM.getDepthData(frame, &kinectDepthBuffer);
+		size = kinectDepthBuffer.size();
+		//kinectDepthBuffer.allocate(sg_cube_vertices, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0])); 
+
+		//kinectRGBBuffer.create();
+		//kinectRGBBuffer.bind();
+		//kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+		//KM.getRgbData(frame, &kinectRGBBuffer);
+		//kinectRGBBuffer.allocate(sg_cube_color, sizeof(sg_cube_color) / sizeof(sg_cube_color[0]));
+
+		kinectProgram->enableAttributeArray(0);
+		kinectProgram->enableAttributeArray(1);
+		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
+		kinectProgram->setAttributeBuffer(1, GL_FLOAT, 0, 3, 0); // Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
+
+		// Release (unbind) all
+		kinectVAO.release();
+		kinectDepthBuffer.release();
+		kinectRGBBuffer.release();
+		kinectProgram->release();
+
+		// Force painting
+		update();
+	}
+	if (frame) {
+		frame->Release();
+	}
 }
 
 void Window::keyPressEvent(QKeyEvent *event) {
@@ -238,55 +389,6 @@ void Window::wheelEvent(QWheelEvent *event) {
 		update();
 	}
 	event->accept();
-}
-
-void Window::timerEvent(QTimerEvent *event)
-{
-	//qDebug() << "Update...";	
-	// New kinect frames arrived
-
-	IMultiSourceFrame* frame = NULL;
-	if (SUCCEEDED(KM.reader->AcquireLatestFrame(&frame))) {
-		//qDebug() << "New frames!";
-
-		kinectProgram->bind();
-
-		// Create Vertex Array Object
-		if (kinectVAO.isCreated()) {
-			kinectVAO.destroy();
-		}
-		kinectVAO.create();
-		kinectVAO.bind();
-
-		kinectDepthBuffer.create();
-		kinectDepthBuffer.bind();
-		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		KM.getDepthData(frame, &kinectDepthBuffer);
-		auto depthBufferId = kinectDepthBuffer.bufferId();
-
-		kinectRGBBuffer.create();
-		kinectRGBBuffer.bind();
-		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		KM.getRgbData(frame, &kinectRGBBuffer);
-		auto RGBBufferId = kinectRGBBuffer.bufferId();
-
-		kinectProgram->enableAttributeArray(0);
-		kinectProgram->enableAttributeArray(1);
-		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
-		kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
-
-		// Release (unbind) all
-		kinectVAO.release();
-		kinectDepthBuffer.release();
-		//kinectRGBBuffer.release();
-		kinectProgram->release();
-
-		// Force painting
-		update();
-	}
-	if (frame) {
-		frame->Release();
-	}
 }
 
 void Window::teardownGL()

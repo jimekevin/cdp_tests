@@ -137,6 +137,7 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 
 	glBuffer->unmap();
 
+	auto size = glBuffer->size();
 	if (depthframe) {
 		depthframe->Release();
 	}
