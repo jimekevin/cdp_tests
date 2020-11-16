@@ -133,10 +133,6 @@ static const GLfloat sg_cube_color[] = {
 	0.982f,  0.099f,  0.879f
 };
 
-/*******************************************************************************
- * OpenGL Events
- ******************************************************************************/
-
 void Window::initializeGL()
 {
 	// Initialize OpenGL Backend
@@ -154,7 +150,6 @@ void Window::initializeGL()
 	glEnable(GL_DEBUG_OUTPUT);
 
 	QSurfaceFormat format;
-	// asks for a OpenGL 3.2 debug context using the Core profile
 	format.setMajorVersion(3);
 	format.setMinorVersion(3);
 	format.setProfile(QSurfaceFormat::CoreProfile);
@@ -171,7 +166,6 @@ void Window::initializeGL()
 
 	// Application-specific initialization
 	{
-		// Create Shader (Do not release until VAO is created)
 		kinectProgram = new QOpenGLShaderProgram();
 		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/point_cloud.vert");
 		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/point_cloud.frag");
@@ -181,30 +175,7 @@ void Window::initializeGL()
 		attrLocationColor = kinectProgram->attributeLocation("color");
 
 		kinectProgram->bind();
-
-		// Default color
-		// TODO: Remove
 		kinectProgram->setAttributeValue("color", QVector3D(1.0, 0.0, 0.0));
-
-		// Create Buffer (Do not release until VAO is created)
-		//m_vertex.create();
-		//m_vertex.bind();
-		//m_vertex.setUsagePattern(QOpenGLBuffer::StaticDraw);
-		//m_vertex.allocate(sg_cube, sizeof(sg_cube));
-
-		// Create Vertex Array Object
-		//m_object.create();
-		//m_object.bind();
-		//kinectProgram->enableAttributeArray(attrLocationVertex);
-		//kinectProgram->enableAttributeArray(attrLocationColor);
-		//kinectProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
-		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
-		//kinectProgram->setAttributeBuffer(attrLocationVertex, GL_FLOAT, 0, 3, 0);
-		//kinectProgram->setAttributeBuffer(attrLocationColor, GL_FLOAT, 0, 3, 0);
-
-		// Release (unbind) all
-		//m_object.release();
-		//m_vertex.release();
 		kinectProgram->release();
 	}
 
@@ -220,17 +191,11 @@ void Window::resizeGL(int width, int height)
 
 void Window::paintGL()
 {
-	GLenum glErr;
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 
 	if (!kinectDepthBuffer.isCreated()) {
 		return;
 	}
-	//if (!kinectBuffer.isCreated()) {
-	//	return;
-	//}
 
 	kinectProgram->bind();
 	{
@@ -242,58 +207,21 @@ void Window::paintGL()
 		projection.perspective(FoV, KM.WIDTH / (GLdouble)KM.HEIGHT, 0.1, 100.0);
 		kinectProgram->setUniformValue("projection", projection);
 
-		//m_object.bind();
-		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube) / sizeof(sg_cube[0]));
-		//m_object.release();
-
 		kinectVAO.bind();
-
-		//glEnableClientState(GL_VERTEX_ARRAY);
-		//glEnableClientState(GL_COLOR_ARRAY);
-
-		//kinectDepthBuffer.bind();
-		//glDrawArrays(GL_POINTS, 0, KM.WIDTH * KM.HEIGHT);
-		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0]));
-		//glVertexPointer(3, GL_FLOAT, 0, NULL);
-
-		//kinectRGBBuffer.bind();
-		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube_color) / sizeof(sg_cube_color[0]));
-		//glColorPointer(3, GL_FLOAT, 0, NULL);
-		//glDrawArrays(GL_POINTS, 0, KM.WIDTH * KM.HEIGHT);
-
-		//glDrawArrays(GL_TRIANGLES, 0, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0]));
-
-		//glDisableClientState(GL_VERTEX_ARRAY);
-		//glDisableClientState(GL_COLOR_ARRAY);
 
 		glEnableVertexAttribArray(attrLocationVertex);
 		kinectDepthBuffer.bind();
 		glVertexAttribPointer(attrLocationVertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
 		kinectDepthBuffer.release();
+
 		glEnableVertexAttribArray(attrLocationColor);
 		kinectRGBBuffer.bind();
 		glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		//auto glErr = glGetError();
-		auto depthBufferSize = kinectDepthBuffer.size();
-		glDrawArrays(GL_POINTS, 0, depthBufferSize);
-		//glErr = glGetError();
-		
-		//kinectRGBBuffer.bind();
-		//glEnableVertexAttribArray(attrLocationColor);
-		//glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-		//kinectBuffer.bind();
-		//glEnableVertexAttribArray(attrLocationVertex);
-		//glEnableVertexAttribArray(attrLocationColor);
-		//glVertexAttribPointer(attrLocationVertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		//glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		//auto size = kinectBuffer.size();
-		//glDrawArrays(GL_POINTS, 0, kinectBuffer.size());
+		glDrawArrays(GL_POINTS, 0, kinectDepthBuffer.size());
 
 		glDisableVertexAttribArray(attrLocationVertex);
 		glDisableVertexAttribArray(attrLocationColor);
 
-		//kinectBuffer.release();
 		kinectDepthBuffer.release();
 		kinectRGBBuffer.release();
 
@@ -312,101 +240,41 @@ void Window::paintGL()
 
 void Window::timerEvent(QTimerEvent *event)
 {
-	GLenum glErr;
-	//qDebug() << "Update...";	
-	// New kinect frames arrived
-
 	IMultiSourceFrame* frame = NULL;
 	auto frameResult = KM.reader->AcquireLatestFrame(&frame);
 	if (SUCCEEDED(frameResult)) {
-		//qDebug() << "New frames!";
-
 		kinectProgram->bind();
 
-		// Create Vertex Array Object
 		if (kinectVAO.isCreated()) {
 			kinectVAO.destroy();
 		}
 		kinectVAO.create();
 		kinectVAO.bind();
 
-		//kinectBuffer.create();
-		//kinectBuffer.bind();
-		//kinectBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		//KM.getDepthAndRGBData(frame, &kinectBuffer);
-
-		//if (kinectDepthBuffer.isCreated()) kinectDepthBuffer.destroy();
 		kinectDepthBuffer.create();
 		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 		kinectDepthBuffer.bind();
-		auto size = kinectDepthBuffer.size();
 		KM.getDepthData(frame, &kinectDepthBuffer);
-		size = kinectDepthBuffer.size();
-		//kinectDepthBuffer.allocate(sg_cube_vertices, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0])); 
 		kinectDepthBuffer.release();
 
-		auto result = kinectRGBBuffer.create();
+		kinectRGBBuffer.create();
 		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		result = kinectRGBBuffer.bind();
-		auto size2 = kinectRGBBuffer.size();
+		kinectRGBBuffer.bind();
 		KM.getRgbData(frame, &kinectRGBBuffer);
-		size2 = kinectRGBBuffer.size();
 		kinectRGBBuffer.release();
-		//kinectRGBBuffer.allocate(sg_cube_color, sizeof(sg_cube_color) / sizeof(sg_cube_color[0]));
 
-		//kinectDepthBuffer.bind();
-		//kinectProgram->enableAttributeArray(0);
-		//kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
-		//kinectDepthBuffer.release();
-
-		//kinectRGBBuffer.bind();
-		//kinectProgram->enableAttributeArray(1);
-		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, 0, 3, 0);
-		//kinectRGBBuffer.release();
-		//kinectProgram->enableAttributeArray(1);
-		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, 3, 3, 0); // Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
-
-		// Release (unbind) all
 		kinectVAO.release();
-		//kinectBuffer.release();
 		kinectProgram->release();
 
+		GLenum glErr;
 		while ((glErr = glGetError()) != GL_NO_ERROR)
 		{
 			qDebug() << glErr;
-
 			const QList<QOpenGLDebugMessage> messages = logger->loggedMessages();
 			for (const QOpenGLDebugMessage &message : messages)
 				qDebug() << message;
-			//GLint maxMsgLen = 0;
-			//glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH, &maxMsgLen);
-			//std::vector<GLchar> msgData(1 * maxMsgLen);
-			//std::vector<GLenum> sources(1);
-			//std::vector<GLenum> types(1);
-			//std::vector<GLenum> severities(1);
-			//std::vector<GLuint> ids(1);
-			//std::vector<GLsizei> lengths(1);
-
-			//GLuint numFound = glGetDebugMessageLog(1, maxMsgLen, &sources[0], &types[0], &ids[0], &severities[0], &lengths[0], &msgData[0]);
-
-			//sources.resize(numFound);
-			//types.resize(numFound);
-			//severities.resize(numFound);
-			//ids.resize(numFound);
-			//lengths.resize(numFound);
-
-			//std::vector<std::string> messages;
-			//messages.reserve(numFound);
-
-			//std::vector<GLchar>::iterator currPos = msgData.begin();
-			//for (size_t msg = 0; msg < lengths.size(); ++msg)
-			//{
-			//	messages.push_back(std::string(currPos, currPos + lengths[msg] - 1));
-			//	currPos = currPos + lengths[msg];
-			//}
 		}
 
-		// Force painting
 		update();
 	}
 	if (frame) {
@@ -466,7 +334,6 @@ void Window::mouseReleaseEvent(QMouseEvent *event) {
 
 void Window::mouseMoveEvent(QMouseEvent *event) {
 	if (event->buttons() == Qt::LeftButton) {
-		// Compute new orientation
 		const auto deltaTime = 1.0;
 		auto mouseX = event->pos().x() - mouseStart.x();
 		auto mouseY = event->pos().y() - mouseStart.y();
@@ -506,17 +373,13 @@ void Window::wheelEvent(QWheelEvent *event) {
 
 void Window::teardownGL()
 {
-	// Actually destroy our OpenGL information
-	m_object.destroy();
-	m_vertex.destroy();
-	delete m_program;
-
 	killTimer(kinectTimerId);
-}
 
-/*******************************************************************************
- * Private Helpers
- ******************************************************************************/
+	kinectDepthBuffer.destroy();
+	kinectRGBBuffer.destroy();
+	kinectVAO.destroy();
+	delete kinectProgram;
+}
 
 void Window::printVersionInformation()
 {

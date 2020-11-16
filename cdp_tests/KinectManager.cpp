@@ -10,7 +10,7 @@
 
 int KinectManager::init() {
 	if (FAILED(GetDefaultKinectSensor(&sensor)) || !sensor) {
-		return 1;
+		return S_FALSE;
 	}
 
 	sensor->get_CoordinateMapper(&mapper);
@@ -20,85 +20,8 @@ int KinectManager::init() {
 		&reader
 	);
 
-	/*IColorFrameSource* colorFrameSource = nullptr;
-	if (FAILED(result)) return 3;
-	result = kinectSensor_->get_ColorFrameSource(&colorFrameSource);
-	if (FAILED(result)) return 4;
-	result = colorFrameSource->OpenReader(&colorFrameReader_);
-	if (!colorFrameReader_) return 5;
-	if (colorFrameSource)
-		colorFrameSource->Release();
-
-	result = kinectSensor_->Open();
-	IDepthFrameSource* depthFrameSource = nullptr;
-	if (FAILED(result)) return 6;
-	result = kinectSensor_->get_DepthFrameSource(&depthFrameSource);
-	if (FAILED(result)) return 7;
-		result = depthFrameSource->OpenReader(&depthFrameReader_);
-	if (!depthFrameReader_) return 8;
-	if (depthFrameSource)
-		depthFrameSource->Release();*/
-
 	return S_OK;
 }
-
-/*int KinectManager::fetchFrames() {
-	auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::system_clock::now().time_since_epoch()
-	).count();
-
-	if (lastFrameFetch + DELAY_MS > ms) {
-		return S_FALSE;
-	}
-
-	cv::Mat output;
-	HRESULT result;
-
-	IDepthFrame* depthFrame = nullptr;
-	result = depthFrameReader_->AcquireLatestFrame(&depthFrame);
-
-	if (FAILED(result)) {
-		if (depthFrame)
-			depthFrame->Release();
-		depthFrame = nullptr;
-		return S_FALSE;
-	}
-	
-	frameCount += 1;
-	lastFrameFetch = ms;
-
-	std::cout << frameCount << ": Found a frame!" << std::endl;
-
-	IFrameDescription* frameDescription = nullptr;
-	int width = 0, height = 0;
-	UINT bufferSize = 0;
-	UINT16* buffer = nullptr;
-
-	result = depthFrame->get_FrameDescription(&frameDescription);
-	if (SUCCEEDED(result))
-		result = frameDescription->get_Width(&width);
-	if (SUCCEEDED(result))
-		result = frameDescription->get_Height(&height);
-	if (SUCCEEDED(result))
-		result = depthFrame->AccessUnderlyingBuffer(&bufferSize, &buffer);
-
-	if (SUCCEEDED(result)) {
-		if (lastFrame != nullptr) {
-			delete lastFrame;
-		}
-		//lastFrame = new cv::Mat(height, width, CV_8UC2, buffer);
-		const cv::Mat img(height, width, CV_8UC2, buffer);
-		cv::cvtColor(img, lastFrame, cv::COLOR_YUV2BGR_YUY2);
-	}
-
-	if (frameDescription)
-		frameDescription->Release();
-	if (depthFrame)
-		depthFrame->Release();
-
-	return S_OK;
-}*/
-
 
 void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer) {
 	IDepthFrame* depthframe;
@@ -126,23 +49,19 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 	if (dest == NULL) {
 		return;
 	}
-	//auto dest = (GLubyte*)glBuffer->map(QOpenGLBuffer::Access::WriteOnly);
 
-	// Write vertex coordinates
 	result = mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2xyz);
 	float* fdest = (float*)dest;
-	for (int i = 0; i < sz; i++) {
+	for (unsigned int i = 0; i < sz; i++) {
 		*fdest++ = depth2xyz[i].X;
 		*fdest++ = depth2xyz[i].Y;
 		*fdest++ = depth2xyz[i].Z;
 	}
 
-	// Fill in depth2rgb map
 	mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
 
 	glBuffer->unmap();
 
-	auto size = glBuffer->size();
 	if (depthframe) {
 		depthframe->Release();
 	}
@@ -168,10 +87,8 @@ void KinectManager::getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer
 		return;
 	}
 
-	// Get data from frame
 	colorframe->CopyConvertedFrameDataToArray(COLORWIDTH * COLORHEIGHT * 4, rgbimage, ColorImageFormat_Rgba);
 
-	// Write color array for vertices
 	float* fdest = (float*)dest;
 	for (int i = 0; i < WIDTH * HEIGHT; i++) {
 		ColorSpacePoint p = depth2rgb[i];
@@ -223,7 +140,7 @@ void KinectManager::getDepthAndRGBData(IMultiSourceFrame* frame, QOpenGLBuffer *
 
 	// Allocate buffer memory
 	auto wh = WIDTH * HEIGHT;
-	auto bufferSize = wh * 6 * sizeof(float); // bytes, = sz
+	auto bufferSize = (int) wh * 6 * sizeof(float); // bytes, = sz
 	glBuffer->allocate(bufferSize);
 	auto dest = glBuffer->mapRange(0, bufferSize, QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
 
