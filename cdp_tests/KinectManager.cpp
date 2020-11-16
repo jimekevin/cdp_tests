@@ -6,6 +6,7 @@
 #include <QtGui/QOpenGLBuffer>
 #include <iostream>
 #include <chrono>
+#include <opencv2/imgcodecs.hpp>
 
 int KinectManager::init() {
 	if (FAILED(GetDefaultKinectSensor(&sensor)) || !sensor) {
@@ -120,7 +121,11 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 	result = depthframe->AccessUnderlyingBuffer(&sz, &buf);
 
 	glBuffer->allocate(sz * 3 * sizeof(float));
+	glBuffer->bind();
 	auto dest = glBuffer->mapRange(0, sz * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+	if (dest == NULL) {
+		return;
+	}
 	//auto dest = (GLubyte*)glBuffer->map(QOpenGLBuffer::Access::WriteOnly);
 
 	// Write vertex coordinates
@@ -159,6 +164,9 @@ void KinectManager::getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer
 
 	glBuffer->allocate(WIDTH * HEIGHT * 3 * sizeof(float));
 	auto dest = glBuffer->mapRange(0, WIDTH * HEIGHT * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+	if (dest == NULL) {
+		return;
+	}
 
 	// Get data from frame
 	colorframe->CopyConvertedFrameDataToArray(COLORWIDTH * COLORHEIGHT * 4, rgbimage, ColorImageFormat_Rgba);
@@ -182,7 +190,88 @@ void KinectManager::getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer
 		// Don't copy alpha channel
 	}
 
+	glBuffer->unmap();
+
 	if (colorframe) {
 		colorframe->Release();
 	}
+}
+
+
+void KinectManager::getDepthAndRGBData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer) {
+	IDepthFrame* depthFrame;
+	IColorFrame* colorFrame;
+	IDepthFrameReference* depthFrameref = NULL;
+	IColorFrameReference* colorFrameref = NULL;
+
+	// Acquire depth and RGB (actually RGBA) frames
+	frame->get_DepthFrameReference(&depthFrameref);
+	depthFrameref->AcquireFrame(&depthFrame);
+	if (depthFrameref) {
+		depthFrameref->Release();
+	}
+
+	frame->get_ColorFrameReference(&colorFrameref);
+	colorFrameref->AcquireFrame(&colorFrame);
+	if (colorFrameref) {
+		colorFrameref->Release();
+	}
+
+	if (!depthFrame || !colorFrame) {
+		return;
+	}
+
+	// Allocate buffer memory
+	auto wh = WIDTH * HEIGHT;
+	auto bufferSize = wh * 6 * sizeof(float); // bytes, = sz
+	glBuffer->allocate(bufferSize);
+	auto dest = glBuffer->mapRange(0, bufferSize, QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+
+	// Depth frame
+	unsigned int sz;
+	unsigned short* depthBuf;
+	depthFrame->AccessUnderlyingBuffer(&sz, &depthBuf);
+	// Write vertex coordinates
+	mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, depthBuf, WIDTH * HEIGHT, depth2xyz);
+	// Fill in depth2rgb map
+	mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, depthBuf, WIDTH * HEIGHT, depth2rgb);
+	depthFrame->Release();
+
+	// Color frame
+	colorFrame->CopyConvertedFrameDataToArray(COLORWIDTH * COLORHEIGHT * 4, rgbimage, ColorImageFormat_Rgba);
+	colorFrame->Release();
+
+	// Write data
+	float* fdest = (float*)dest;
+	for (int i = 0; i < wh; i++) {
+		*fdest++ = depth2xyz[i].X;
+		*fdest++ = depth2xyz[i].Y;
+		*fdest++ = depth2xyz[i].Z;
+
+		ColorSpacePoint p = depth2rgb[i];
+		// Check if color pixel coordinates are in bounds
+		if (p.X < 0 || p.Y < 0 || p.X > COLORWIDTH || p.Y > COLORHEIGHT) {
+			*fdest++ = 0;
+			*fdest++ = 0;
+			*fdest++ = 0;
+		}
+		else {
+			int idx = (int)p.X + COLORWIDTH * (int)p.Y;
+			*fdest++ = rgbimage[4 * idx + 0] / 255.;
+			*fdest++ = rgbimage[4 * idx + 1] / 255.;
+			*fdest++ = rgbimage[4 * idx + 2] / 255.;
+		}
+		// Don't copy alpha channel
+	}
+
+	glBuffer->unmap();
+}
+
+void KinectManager::saveRGBImage(std::string path) {
+	cv::Mat frameRGB(COLORHEIGHT, COLORWIDTH, CV_8UC4, rgbimage);
+	cv::Mat frameBGRA(COLORHEIGHT, COLORWIDTH, CV_8UC4);
+	cv::cvtColor(frameRGB, frameBGRA, cv::COLOR_RGBA2BGRA);
+	cv::Mat flippedFrame;
+	cv::flip(frameBGRA, flippedFrame, 1);
+	cv::imwrite(path, flippedFrame);
 }

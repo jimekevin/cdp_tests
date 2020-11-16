@@ -3,6 +3,10 @@
 #include <QtCore/QString>
 #include <QtGui/QOpenGLShaderProgram>
 #include <QtMath>
+#include <QOpenGLExtraFunctions>
+#include <QtGlobal>
+#include <QOpenGLDebugLogger>
+#include <ctime>
 #include "vertex.h"
 #include "KinectManager.h"
 
@@ -144,10 +148,23 @@ void Window::initializeGL()
 	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
 	glClearDepth(1.0f);
 	glEnable(GL_PROGRAM_POINT_SIZE);
-	glEnable(GL_DEPTH_TEST);
-	glDepthFunc(GL_LESS);
+	//glEnable(GL_DEPTH_TEST);
+	//glDepthFunc(GL_LESS);
 
 	glEnable(GL_DEBUG_OUTPUT);
+
+	QSurfaceFormat format;
+	// asks for a OpenGL 3.2 debug context using the Core profile
+	format.setMajorVersion(3);
+	format.setMinorVersion(3);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	format.setOption(QSurfaceFormat::DebugContext);
+
+	QOpenGLContext *ctx = QOpenGLContext::currentContext();
+	ctx->setFormat(format);
+	logger = new QOpenGLDebugLogger(this);
+
+	logger->initialize(); // initializes in the current context, i.e. ctx
 
 	// Cull triangles which normal is not towards the camera = you cannnot go inside objects
 	//glEnable(GL_CULL_FACE);
@@ -178,12 +195,12 @@ void Window::initializeGL()
 		// Create Vertex Array Object
 		//m_object.create();
 		//m_object.bind();
-		kinectProgram->enableAttributeArray(0);
-		kinectProgram->enableAttributeArray(1);
+		//kinectProgram->enableAttributeArray(attrLocationVertex);
+		//kinectProgram->enableAttributeArray(attrLocationColor);
 		//kinectProgram->setAttributeBuffer(0, GL_FLOAT, Vertex::positionOffset(), Vertex::PositionTupleSize, Vertex::stride());
 		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
-		//kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
-		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, 0, 3, 0);
+		//kinectProgram->setAttributeBuffer(attrLocationVertex, GL_FLOAT, 0, 3, 0);
+		//kinectProgram->setAttributeBuffer(attrLocationColor, GL_FLOAT, 0, 3, 0);
 
 		// Release (unbind) all
 		//m_object.release();
@@ -211,6 +228,9 @@ void Window::paintGL()
 	if (!kinectDepthBuffer.isCreated()) {
 		return;
 	}
+	//if (!kinectBuffer.isCreated()) {
+	//	return;
+	//}
 
 	kinectProgram->bind();
 	{
@@ -227,6 +247,7 @@ void Window::paintGL()
 		//m_object.release();
 
 		kinectVAO.bind();
+
 		//glEnableClientState(GL_VERTEX_ARRAY);
 		//glEnableClientState(GL_COLOR_ARRAY);
 
@@ -245,29 +266,48 @@ void Window::paintGL()
 		//glDisableClientState(GL_VERTEX_ARRAY);
 		//glDisableClientState(GL_COLOR_ARRAY);
 
-
-
-		kinectDepthBuffer.bind();
 		glEnableVertexAttribArray(attrLocationVertex);
+		kinectDepthBuffer.bind();
 		glVertexAttribPointer(attrLocationVertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
-		
-		kinectRGBBuffer.bind();
+		kinectDepthBuffer.release();
 		glEnableVertexAttribArray(attrLocationColor);
+		kinectRGBBuffer.bind();
 		glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		//auto glErr = glGetError();
+		auto depthBufferSize = kinectDepthBuffer.size();
+		glDrawArrays(GL_POINTS, 0, depthBufferSize);
+		//glErr = glGetError();
+		
+		//kinectRGBBuffer.bind();
+		//glEnableVertexAttribArray(attrLocationColor);
+		//glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-		auto size = kinectDepthBuffer.size();
-		//glDrawArrays(GL_TRIANGLES, 0, kinectDepthBuffer.size());
-		glDrawArrays(GL_POINTS, 0, kinectDepthBuffer.size());
+		//kinectBuffer.bind();
+		//glEnableVertexAttribArray(attrLocationVertex);
+		//glEnableVertexAttribArray(attrLocationColor);
+		//glVertexAttribPointer(attrLocationVertex, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		//glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 0, 0);
+		//auto size = kinectBuffer.size();
+		//glDrawArrays(GL_POINTS, 0, kinectBuffer.size());
 
 		glDisableVertexAttribArray(attrLocationVertex);
 		glDisableVertexAttribArray(attrLocationColor);
 
+		//kinectBuffer.release();
 		kinectDepthBuffer.release();
 		kinectRGBBuffer.release();
 
 		kinectVAO.release();
 	}
 	kinectProgram->release();
+
+	//qDebug() << "QVector3D position  = QVector3D(" << position.x() << ", " << position.y() << ", " << position.z() << ");";
+	//qDebug() << "QVector3D direction = QVector3D(" << direction.x() << ", " << direction.y() << ", " << direction.z() << ");";
+	//qDebug() << "QVector3D right     = QVector3D(" << right.x() << ", " << right.y() << ", " << right.z() << ");";
+	//qDebug() << "QVector3D up        = QVector3D(" << up.x() << ", " << up.y() << ", " << up.z() << ");";
+	//qDebug() << "float horizontalAngle = " << horizontalAngle << ";";
+	//qDebug() << "float verticalAngle = " << verticalAngle << ";";
+	//qDebug() << "";
 }
 
 void Window::timerEvent(QTimerEvent *event)
@@ -277,7 +317,8 @@ void Window::timerEvent(QTimerEvent *event)
 	// New kinect frames arrived
 
 	IMultiSourceFrame* frame = NULL;
-	if (SUCCEEDED(KM.reader->AcquireLatestFrame(&frame))) {
+	auto frameResult = KM.reader->AcquireLatestFrame(&frame);
+	if (SUCCEEDED(frameResult)) {
 		//qDebug() << "New frames!";
 
 		kinectProgram->bind();
@@ -289,37 +330,80 @@ void Window::timerEvent(QTimerEvent *event)
 		kinectVAO.create();
 		kinectVAO.bind();
 
+		//kinectBuffer.create();
+		//kinectBuffer.bind();
+		//kinectBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+		//KM.getDepthAndRGBData(frame, &kinectBuffer);
+
 		//if (kinectDepthBuffer.isCreated()) kinectDepthBuffer.destroy();
 		kinectDepthBuffer.create();
-		kinectDepthBuffer.bind();
 		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+		kinectDepthBuffer.bind();
 		auto size = kinectDepthBuffer.size();
 		KM.getDepthData(frame, &kinectDepthBuffer);
 		size = kinectDepthBuffer.size();
 		//kinectDepthBuffer.allocate(sg_cube_vertices, sizeof(sg_cube_vertices) / sizeof(sg_cube_vertices[0])); 
+		kinectDepthBuffer.release();
 
 		auto result = kinectRGBBuffer.create();
-		result = kinectRGBBuffer.bind();
 		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+		result = kinectRGBBuffer.bind();
 		auto size2 = kinectRGBBuffer.size();
 		KM.getRgbData(frame, &kinectRGBBuffer);
 		size2 = kinectRGBBuffer.size();
+		kinectRGBBuffer.release();
 		//kinectRGBBuffer.allocate(sg_cube_color, sizeof(sg_cube_color) / sizeof(sg_cube_color[0]));
 
-		kinectProgram->enableAttributeArray(0);
-		kinectProgram->enableAttributeArray(1);
-		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
-		kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0); // Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
+		//kinectDepthBuffer.bind();
+		//kinectProgram->enableAttributeArray(0);
+		//kinectProgram->setAttributeBuffer(0, GL_FLOAT, 0, 3, 0);
+		//kinectDepthBuffer.release();
+
+		//kinectRGBBuffer.bind();
+		//kinectProgram->enableAttributeArray(1);
+		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, 0, 3, 0);
+		//kinectRGBBuffer.release();
+		//kinectProgram->enableAttributeArray(1);
+		//kinectProgram->setAttributeBuffer(1, GL_FLOAT, 3, 3, 0); // Vertex::colorOffset(), Vertex::ColorTupleSize, Vertex::stride());
 
 		// Release (unbind) all
 		kinectVAO.release();
-		kinectDepthBuffer.release();
-		kinectRGBBuffer.release();
+		//kinectBuffer.release();
 		kinectProgram->release();
 
 		while ((glErr = glGetError()) != GL_NO_ERROR)
 		{
 			qDebug() << glErr;
+
+			const QList<QOpenGLDebugMessage> messages = logger->loggedMessages();
+			for (const QOpenGLDebugMessage &message : messages)
+				qDebug() << message;
+			//GLint maxMsgLen = 0;
+			//glGetIntegerv(GL_MAX_DEBUG_MESSAGE_LENGTH, &maxMsgLen);
+			//std::vector<GLchar> msgData(1 * maxMsgLen);
+			//std::vector<GLenum> sources(1);
+			//std::vector<GLenum> types(1);
+			//std::vector<GLenum> severities(1);
+			//std::vector<GLuint> ids(1);
+			//std::vector<GLsizei> lengths(1);
+
+			//GLuint numFound = glGetDebugMessageLog(1, maxMsgLen, &sources[0], &types[0], &ids[0], &severities[0], &lengths[0], &msgData[0]);
+
+			//sources.resize(numFound);
+			//types.resize(numFound);
+			//severities.resize(numFound);
+			//ids.resize(numFound);
+			//lengths.resize(numFound);
+
+			//std::vector<std::string> messages;
+			//messages.reserve(numFound);
+
+			//std::vector<GLchar>::iterator currPos = msgData.begin();
+			//for (size_t msg = 0; msg < lengths.size(); ++msg)
+			//{
+			//	messages.push_back(std::string(currPos, currPos + lengths[msg] - 1));
+			//	currPos = currPos + lengths[msg];
+			//}
 		}
 
 		// Force painting
@@ -360,6 +444,14 @@ void Window::keyPressEvent(QKeyEvent *event) {
 		//view.translate(-CAMERA_SPEED, 0, 0);
 		position -= direction * deltaTime * speed;
 		break;
+
+	case Qt::Key::Key_1:
+		std::time_t result = std::time(nullptr);
+		std::stringstream path;
+		path << "C:\\Users\\Kevin Bein\\Downloads\\" << result << ".png";
+		KM.saveRGBImage(path.str());
+		qDebug() << "Write RGB to disk: " << path.str().c_str();
+		break;
 	} 
 	//qDebug() << "press key: " << event->key() << " (" << event->text() << ") ";
 	event->accept();
@@ -378,7 +470,7 @@ void Window::mouseMoveEvent(QMouseEvent *event) {
 		const auto deltaTime = 1.0;
 		auto mouseX = event->pos().x() - mouseStart.x();
 		auto mouseY = event->pos().y() - mouseStart.y();
-		qDebug() << "Mouse move: " << mouseX << ", " << mouseY;
+		//qDebug() << "Mouse move: " << mouseX << ", " << mouseY;
 		horizontalAngle += mouseSpeed * deltaTime * mouseX;
 		verticalAngle += mouseSpeed * deltaTime * mouseY;
 		direction = QVector3D(
@@ -445,6 +537,8 @@ void Window::printVersionInformation()
 		CASE(CompatibilityProfile);
 	}
 #undef CASE
+
+	qDebug() << "Qt Version: " << QT_VERSION_STR;
 
 	// qPrintable() will print our QString w/o quotes around it.
 	qDebug() << qPrintable(glType) << qPrintable(glVersion) << "(" << qPrintable(glProfile) << ")";

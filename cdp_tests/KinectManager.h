@@ -49,4 +49,7 @@ public:
 
 	void getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
 	void getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
+	void getDepthAndRGBData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
+
+	void saveRGBImage(std::string path);
 };
