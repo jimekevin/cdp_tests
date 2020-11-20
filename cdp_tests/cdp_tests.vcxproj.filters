@@ -43,6 +43,9 @@
     <ClCompile Include="window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="KinectManager.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vertex.h">
@@ -51,6 +54,9 @@
     <QtMoc Include="window.h">
       <Filter>Header Files</Filter>
     </QtMoc>
+    <ClInclude Include="KinectManager.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">
@@ -59,10 +65,6 @@
     <CustomBuild Include="release\moc_predefs.h.cbt">
       <Filter>Generated Files</Filter>
     </CustomBuild>
-    
-    
-    
-    
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\point_cloud.frag">
@@ -74,10 +76,10 @@
     <QtRcc Include="resources.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-    <None Include="shaders\simple.frag">
+    <None Include="shaders\map_view.vert">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shaders\simple.vert">
+    <None Include="shaders\map_view.frag">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

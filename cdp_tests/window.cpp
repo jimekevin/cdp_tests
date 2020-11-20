@@ -133,6 +133,16 @@ static const GLfloat sg_cube_color[] = {
 	0.982f,  0.099f,  0.879f
 };
 
+static const GLfloat sg_cube_vertices[] = {
+	1.0f, 1.0f, 0.0f,
+	-1.0f, 1.0f, 0.0f,
+	-1.0f, -1.0f, 0.0f,
+	1.0f, 1.0f, 0.0f,
+	1.0f, -1.0f, 0.0f,
+	-1.0f, -1.0f, 0.0f,
+	1.0f, 1.0f, 0.0f,
+};
+
 void Window::initializeGL()
 {
 	// Initialize OpenGL Backend
@@ -177,6 +187,11 @@ void Window::initializeGL()
 		kinectProgram->bind();
 		kinectProgram->setAttributeValue("color", QVector3D(1.0, 0.0, 0.0));
 		kinectProgram->release();
+
+		mapProgram = new QOpenGLShaderProgram();
+		mapProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/map_view.vert");
+		mapProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/map_view.frag");
+		mapProgram->link();
 	}
 
 	kinectTimerId = startTimer(KinectManager::DELAY_MS);
