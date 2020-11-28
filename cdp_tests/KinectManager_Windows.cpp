@@ -23,11 +23,18 @@ int KinectManager::init() {
     return S_OK;
 }
 
-void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer) {
+long KinectManager::AcquireLatestFrame() {
+	return reader->AcquireLatestFrame(&lastFrame);
+}
+
+void KinectManager::ReleaseLatestFrame() {
+}
+
+void KinectManager::getDepthData(QOpenGLBuffer *glBuffer) {
     IDepthFrame* depthframe;
     IDepthFrameReference* frameref = NULL;
 
-    frame->get_DepthFrameReference(&frameref);
+	lastFrame->get_DepthFrameReference(&frameref);
     frameref->AcquireFrame(&depthframe);
     if (frameref) {
         frameref->Release();
@@ -60,18 +67,18 @@ void KinectManager::getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuff
 
     mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
 
-    glBuffer->unmap();
-
-    if (depthframe) {
-        depthframe->Release();
-    }
+    glBuffer->unmap();	
+	
+	if (depthframe) {
+		depthframe->Release();
+	}
 }
 
-void KinectManager::getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer) {
+void KinectManager::getRgbData(QOpenGLBuffer *glBuffer) {
     IColorFrame* colorframe;
     IColorFrameReference* frameref = NULL;
 
-    frame->get_ColorFrameReference(&frameref);
+	lastFrame->get_ColorFrameReference(&frameref);
     frameref->AcquireFrame(&colorframe);
     if (frameref) {
         frameref->Release();
@@ -109,79 +116,9 @@ void KinectManager::getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer
 
     glBuffer->unmap();
 
-    if (colorframe) {
-        colorframe->Release();
-    }
-}
-
-
-void KinectManager::getDepthAndRGBData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer) {
-    IDepthFrame* depthFrame;
-    IColorFrame* colorFrame;
-    IDepthFrameReference* depthFrameref = NULL;
-    IColorFrameReference* colorFrameref = NULL;
-
-    // Acquire depth and RGB (actually RGBA) frames
-    frame->get_DepthFrameReference(&depthFrameref);
-    depthFrameref->AcquireFrame(&depthFrame);
-    if (depthFrameref) {
-        depthFrameref->Release();
-    }
-
-    frame->get_ColorFrameReference(&colorFrameref);
-    colorFrameref->AcquireFrame(&colorFrame);
-    if (colorFrameref) {
-        colorFrameref->Release();
-    }
-
-    if (!depthFrame || !colorFrame) {
-        return;
-    }
-
-    // Allocate buffer memory
-    auto wh = WIDTH * HEIGHT;
-    auto bufferSize = (int) wh * 6 * sizeof(float); // bytes, = sz
-    glBuffer->allocate(bufferSize);
-    auto dest = glBuffer->mapRange(0, bufferSize, QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
-
-    // Depth frame
-    unsigned int sz;
-    unsigned short* depthBuf;
-    depthFrame->AccessUnderlyingBuffer(&sz, &depthBuf);
-    // Write vertex coordinates
-    mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, depthBuf, WIDTH * HEIGHT, depth2xyz);
-    // Fill in depth2rgb map
-    mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, depthBuf, WIDTH * HEIGHT, depth2rgb);
-    depthFrame->Release();
-
-    // Color frame
-    colorFrame->CopyConvertedFrameDataToArray(COLORWIDTH * COLORHEIGHT * 4, rgbimage, ColorImageFormat_Rgba);
-    colorFrame->Release();
-
-    // Write data
-    float* fdest = (float*)dest;
-    for (int i = 0; i < wh; i++) {
-        *fdest++ = depth2xyz[i].X;
-        *fdest++ = depth2xyz[i].Y;
-        *fdest++ = depth2xyz[i].Z;
-
-        ColorSpacePoint p = depth2rgb[i];
-        // Check if color pixel coordinates are in bounds
-        if (p.X < 0 || p.Y < 0 || p.X > COLORWIDTH || p.Y > COLORHEIGHT) {
-            *fdest++ = 0;
-            *fdest++ = 0;
-            *fdest++ = 0;
-        }
-        else {
-            int idx = (int)p.X + COLORWIDTH * (int)p.Y;
-            *fdest++ = rgbimage[4 * idx + 0] / 255.;
-            *fdest++ = rgbimage[4 * idx + 1] / 255.;
-            *fdest++ = rgbimage[4 * idx + 2] / 255.;
-        }
-        // Don't copy alpha channel
-    }
-
-    glBuffer->unmap();
+	if (colorframe) {
+		colorframe->Release();
+	}
 }
 
 void KinectManager::saveRGBImage(std::string path) {

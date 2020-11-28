@@ -192,12 +192,12 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="KinectManager.cpp" />
+    <ClCompile Include="KinectManager_Windows.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="KinectManager.h" />
+    <ClInclude Include="KinectManager_Windows.h" />
     <ClInclude Include="vertex.h" />
     <QtMoc Include="window.h">
     </QtMoc>

@@ -29,7 +29,8 @@ private:
 
   int frameCount = 0;
   long long lastFrameFetch = 0;
-  cv::Mat lastFrame;
+
+  IMultiSourceFrame *lastFrame = nullptr;
 
 public:
   KinectManager(const KinectManager&) = delete;
@@ -43,11 +44,12 @@ public:
   }
 
   int init();
-  //int fetchFrames();
+  
+  long AcquireLatestFrame();
+  void ReleaseLatestFrame();
 
-  void getDepthData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
-  void getRgbData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
-  void getDepthAndRGBData(IMultiSourceFrame* frame, QOpenGLBuffer *glBuffer);
+  void getDepthData(QOpenGLBuffer *glBuffer);
+  void getRgbData(QOpenGLBuffer *glBuffer);
 
   void saveRGBImage(std::string path);
 };
