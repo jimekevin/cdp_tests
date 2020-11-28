@@ -7,8 +7,17 @@
 #include <QtGlobal>
 #include <QOpenGLDebugLogger>
 #include <ctime>
+#include <sstream>
+#include <QFileInfo>
 #include "vertex.h"
-#include "KinectManager.h"
+
+#ifdef APPLE
+#include "KinectManager_MacOS.h"
+#else
+#include "KinectManager_Windows.h"
+#endif
+
+#define KM KinectManager::instance()
 
 // Create a colored triangle
 static const Vertex sg_vertexes[] = {
@@ -133,6 +142,7 @@ static const GLfloat sg_cube_color[] = {
 	0.982f,  0.099f,  0.879f
 };
 
+/*
 static const GLfloat sg_cube_vertices[] = {
 	1.0f, 1.0f, 0.0f,
 	-1.0f, 1.0f, 0.0f,
@@ -141,7 +151,7 @@ static const GLfloat sg_cube_vertices[] = {
 	1.0f, -1.0f, 0.0f,
 	-1.0f, -1.0f, 0.0f,
 	1.0f, 1.0f, 0.0f,
-};
+};*/
 
 void Window::initializeGL()
 {
@@ -157,7 +167,7 @@ void Window::initializeGL()
 	//glEnable(GL_DEPTH_TEST);
 	//glDepthFunc(GL_LESS);
 
-	glEnable(GL_DEBUG_OUTPUT);
+	//glEnable(GL_DEBUG_OUTPUT);
 
 	QSurfaceFormat format;
 	format.setMajorVersion(3);
@@ -176,9 +186,11 @@ void Window::initializeGL()
 
 	// Application-specific initialization
 	{
+        //QFileInfo info("./shaders/point_cloud.vert");
+        //qDebug() << info.absoluteFilePath();
 		kinectProgram = new QOpenGLShaderProgram();
-		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/point_cloud.vert");
-		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/point_cloud.frag");
+		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, "./shaders/point_cloud.vert");
+		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, "./shaders/point_cloud.frag");
 		kinectProgram->link();
 
 		attrLocationVertex = kinectProgram->attributeLocation("vertex");
@@ -189,8 +201,8 @@ void Window::initializeGL()
 		kinectProgram->release();
 
 		mapProgram = new QOpenGLShaderProgram();
-		mapProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/map_view.vert");
-		mapProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/map_view.frag");
+		mapProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, "./shaders/map_view.vert");
+		mapProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, "./shaders/map_view.frag");
 		mapProgram->link();
 	}
 
@@ -255,9 +267,8 @@ void Window::paintGL()
 
 void Window::timerEvent(QTimerEvent *event)
 {
-	IMultiSourceFrame* frame = NULL;
-	auto frameResult = KM.reader->AcquireLatestFrame(&frame);
-	if (SUCCEEDED(frameResult)) {
+	auto frameResult = KM.AcquireLatestFrame();
+	if (((long) frameResult) >= 0) {
 		kinectProgram->bind();
 
 		if (kinectVAO.isCreated()) {
@@ -269,13 +280,13 @@ void Window::timerEvent(QTimerEvent *event)
 		kinectDepthBuffer.create();
 		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 		kinectDepthBuffer.bind();
-		KM.getDepthData(frame, &kinectDepthBuffer);
+		KM.getDepthData(&kinectDepthBuffer);
 		kinectDepthBuffer.release();
 
 		kinectRGBBuffer.create();
 		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 		kinectRGBBuffer.bind();
-		KM.getRgbData(frame, &kinectRGBBuffer);
+		KM.getRgbData(&kinectRGBBuffer);
 		kinectRGBBuffer.release();
 
 		kinectVAO.release();
@@ -292,9 +303,7 @@ void Window::timerEvent(QTimerEvent *event)
 
 		update();
 	}
-	if (frame) {
-		frame->Release();
-	}
+	KM.ReleaseLatestFrame();
 }
 
 void Window::keyPressEvent(QKeyEvent *event) {

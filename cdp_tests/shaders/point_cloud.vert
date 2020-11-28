@@ -1,10 +1,12 @@
+#version 410
+
 uniform mat4 view;
 uniform mat4 projection;
 
-attribute vec3 vertex;
-attribute vec3 color;
+in vec3 vertex;
+in vec3 color;
 
-varying vec4 vertColor;
+out vec4 vertColor;
 
 void main() {
   gl_Position = projection * view * vec4(vertex, 1.0);

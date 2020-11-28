@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VERTEX_H
+#define VERTEX_H
 
 #include <QtGui/QVector3D>
 
@@ -50,3 +51,5 @@ void inline Vertex::setColor(const QVector3D& color) { m_color = color; }
 Q_DECL_CONSTEXPR inline int Vertex::positionOffset() { return offsetof(Vertex, m_position); }
 Q_DECL_CONSTEXPR inline int Vertex::colorOffset() { return offsetof(Vertex, m_color); }
 Q_DECL_CONSTEXPR inline int Vertex::stride() { return sizeof(Vertex); }
+
+#endif // VERTEX_H
