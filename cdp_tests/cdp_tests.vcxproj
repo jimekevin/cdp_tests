@@ -194,13 +194,16 @@
   <ItemGroup>
     <ClCompile Include="KinectManager_Windows.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="window.cpp" />
+    <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="MainGLWidget.cpp" />
+    <ClCompile Include="OutputTextBrowser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KinectManager_Windows.h" />
+    <QtMoc Include="MainGLWidget.h" />
+    <QtMoc Include="MainWindow.h" />
+    <QtMoc Include="OutputTextBrowser.h" />
     <ClInclude Include="vertex.h" />
-    <QtMoc Include="window.h">
-    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="debug\moc_predefs.h.cbt">
@@ -227,6 +230,11 @@
     <None Include="shaders\map_view.vert" />
     <None Include="shaders\point_cloud.frag" />
     <None Include="shaders\point_cloud.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="main_window.ui">
+      <SubType>Designer</SubType>
+    </QtUic>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

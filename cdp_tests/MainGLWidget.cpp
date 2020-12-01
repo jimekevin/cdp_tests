@@ -1,4 +1,4 @@
-#include "window.h"
+#include "MainGLWidget.h"
 #include <QtCore/QDebug>
 #include <QtCore/QString>
 #include <QtGui/QOpenGLShaderProgram>
@@ -153,29 +153,82 @@ static const GLfloat sg_cube_vertices[] = {
 	1.0f, 1.0f, 0.0f,
 };*/
 
-void Window::initializeGL()
+// e.g. Valid point: {X=-1.55726588 Y=1.33272767 Z=2.19400001 }
+static const GLfloat map_plane_vertices[] = {
+	-2.0f, -2.0f, 0.5f,
+	2.0f, -2.0f, 0.5f,
+	2.0f, 2.0f, 0.5f,
+	-2.0f, -2.0f, 0.5f,
+	-2.0f, 2.0f, 0.5f,
+	2.0f, 2.0f, 0.5f,
+};
+
+#define MAKE_RECT(x, y, z, w, h, r, g, b) { \
+	{ x - w/2, y - h/2, z, r, g, b }, \
+	{ x + w/2, y - h/2, z, r, g, b }, \
+	{ x + w/2, y + h/2, z, r, g, b }, \
+	{ x - w/2, y - h/2, z, r, g, b }, \
+	{ x - w/2, y + h/2, z, r, g, b }, \
+	{ x + w/2, y + h/2, z, r, g, b }, \
+}
+static const GLfloat map_vertices[][6][6] = {
+	MAKE_RECT(0.0f, 0.0f, 0.50f, 4.0f, 4.0f, 0.5f, 0.5f, 0.5f), // Plane
+	MAKE_RECT(0.0f, 0.0f, 0.4999f, 1.0f, 1.0f, 0.0f, 0.7f, 0.0f), // Building 1
+	MAKE_RECT(1.0f, 1.0f, 0.4999f, 0.5f, 0.5f, 0.0f, 1.0f, 0.2f), // Building 2
+};
+/*static const GLfloat map_vertices[][6][6] = { {
+-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, // Top-left
+0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f, // Top-right
+0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
+
+0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f, // Bottom-right
+-0.5f, -0.5f, 0.5f, 1.0f, 1.0f, 1.0f, // Bottom-left
+-0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f  // Top-left
+} };*/
+/*static const std::vector<std::vector<float[6]>>map_vertices{
+	MAKE_RECT(0.0f, 0.0f, 4.0f, 4.0f, 0.5f, 0.5f, 0.5f), // Plane
+	MAKE_RECT(0.0f, 0.0f, 1.0f, 1.0f, 0.0f, 0.7f, 0.0f), // Building 1
+};*/
+
+MainGLWidget::MainGLWidget(QWidget *parent)
+	: QOpenGLWidget(parent)
+{
+	// Make window activ to recieve key strokes 
+	// and be able to handle them in here
+	setFocus();
+
+	updateInfo();
+}
+
+MainGLWidget::~MainGLWidget()
+{
+}
+
+void MainGLWidget::initializeGL()
 {
 	// Initialize OpenGL Backend
 	initializeOpenGLFunctions();
-	connect(context(), SIGNAL(aboutToBeDestroyed()), this, SLOT(teardownGL()), Qt::DirectConnection);
+	//connect(context(), SIGNAL(aboutToBeDestroyed()), this, SLOT(teardownGL()), Qt::DirectConnection);
 	printVersionInformation();
 
 	// Set global information
-	glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	//glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClearDepth(1.0f);
 	glEnable(GL_PROGRAM_POINT_SIZE);
-	//glEnable(GL_DEPTH_TEST);
-	//glDepthFunc(GL_LESS);
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	//glEnable(GL_DEBUG_OUTPUT);
 
 	QSurfaceFormat format;
-	format.setMajorVersion(3);
-	format.setMinorVersion(3);
+	format.setMajorVersion(4);
+	format.setMinorVersion(1);
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	format.setOption(QSurfaceFormat::DebugContext);
 
-	QOpenGLContext *ctx = QOpenGLContext::currentContext();
+	//QOpenGLContext *ctx = QOpenGLContext::currentContext();
+	auto ctx = (QOpenGLContext*)context();
 	ctx->setFormat(format);
 	logger = new QOpenGLDebugLogger(this);
 
@@ -184,10 +237,9 @@ void Window::initializeGL()
 	// Cull triangles which normal is not towards the camera = you cannnot go inside objects
 	//glEnable(GL_CULL_FACE);
 
-	// Application-specific initialization
 	{
-        //QFileInfo info("./shaders/point_cloud.vert");
-        //qDebug() << info.absoluteFilePath();
+		//QFileInfo info("./shaders/point_cloud.vert");
+		//qDebug() << info.absoluteFilePath();
 		kinectProgram = new QOpenGLShaderProgram();
 		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, "./shaders/point_cloud.vert");
 		kinectProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, "./shaders/point_cloud.frag");
@@ -199,24 +251,40 @@ void Window::initializeGL()
 		kinectProgram->bind();
 		kinectProgram->setAttributeValue("color", QVector3D(1.0, 0.0, 0.0));
 		kinectProgram->release();
+	}
 
+	{
 		mapProgram = new QOpenGLShaderProgram();
 		mapProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, "./shaders/map_view.vert");
 		mapProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, "./shaders/map_view.frag");
 		mapProgram->link();
+
+		mapVAO.create();
+		mapVAO.bind();
+
+		mapBuffer.create();
+		mapBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
+		mapBuffer.bind();
+		mapBuffer.allocate(map_vertices, sizeof(map_vertices));
+		mapBuffer.release();
+
+		mapVAO.release();
+		mapProgram->release();
 	}
 
 	kinectTimerId = startTimer(KinectManager::DELAY_MS);
+
+	updateInfo();
 }
 
-void Window::resizeGL(int width, int height)
+void MainGLWidget::resizeGL(int width, int height)
 {
 	// Currently we are not handling width/height changes.
 	(void)width;
 	(void)height;
 }
 
-void Window::paintGL()
+void MainGLWidget::paintGL()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -224,14 +292,46 @@ void Window::paintGL()
 		return;
 	}
 
+	QMatrix4x4 view;
+	view.lookAt(position, position + direction, QVector3D(0, 1, 0));
+
+	QMatrix4x4 projection;
+	projection.perspective(FoV, width() / (GLdouble)height(), 0.1, 100.0);
+
+	mapProgram->bind();
+	{
+		QMatrix4x4 model;
+		model.translate(0.0f, 0.0f, mapDepth);
+		mapProgram->setUniformValue("model", model);
+
+		mapProgram->setUniformValue("view", view);
+		mapProgram->setUniformValue("projection", projection);
+
+		auto attrLocationVertex = mapProgram->attributeLocation("vertex");
+		auto attrLocationColor = mapProgram->attributeLocation("color");
+
+		mapVAO.bind();
+
+		mapBuffer.bind();
+		glEnableVertexAttribArray(attrLocationVertex);
+		glVertexAttribPointer(attrLocationVertex, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
+		glEnableVertexAttribArray(attrLocationColor);
+		glVertexAttribPointer(attrLocationColor, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+		for (int i = 0; i < sizeof(map_vertices) / 6 / 6; i++) {
+			glDrawArrays(GL_TRIANGLES, i * 6, 6);
+		}
+		glDisableVertexAttribArray(attrLocationVertex);
+		glDisableVertexAttribArray(attrLocationColor);
+
+		mapBuffer.release();
+
+		mapVAO.release();
+	}
+	mapProgram->release();
+
 	kinectProgram->bind();
 	{
-		QMatrix4x4 view;
-		view.lookAt(position, position + direction, QVector3D(0, 1, 0));
 		kinectProgram->setUniformValue("view", view);
-
-		QMatrix4x4 projection;
-		projection.perspective(FoV, KM.WIDTH / (GLdouble)KM.HEIGHT, 0.1, 100.0);
 		kinectProgram->setUniformValue("projection", projection);
 
 		kinectVAO.bind();
@@ -255,20 +355,12 @@ void Window::paintGL()
 		kinectVAO.release();
 	}
 	kinectProgram->release();
-
-	//qDebug() << "QVector3D position  = QVector3D(" << position.x() << ", " << position.y() << ", " << position.z() << ");";
-	//qDebug() << "QVector3D direction = QVector3D(" << direction.x() << ", " << direction.y() << ", " << direction.z() << ");";
-	//qDebug() << "QVector3D right     = QVector3D(" << right.x() << ", " << right.y() << ", " << right.z() << ");";
-	//qDebug() << "QVector3D up        = QVector3D(" << up.x() << ", " << up.y() << ", " << up.z() << ");";
-	//qDebug() << "float horizontalAngle = " << horizontalAngle << ";";
-	//qDebug() << "float verticalAngle = " << verticalAngle << ";";
-	//qDebug() << "";
 }
 
-void Window::timerEvent(QTimerEvent *event)
+void MainGLWidget::timerEvent(QTimerEvent *event)
 {
 	auto frameResult = KM.AcquireLatestFrame();
-	if (((long) frameResult) >= 0) {
+	if (((long)frameResult) >= 0) {
 		kinectProgram->bind();
 
 		if (kinectVAO.isCreated()) {
@@ -306,7 +398,7 @@ void Window::timerEvent(QTimerEvent *event)
 	KM.ReleaseLatestFrame();
 }
 
-void Window::keyPressEvent(QKeyEvent *event) {
+void MainGLWidget::keyPressEvent(QKeyEvent *event) {
 	switch (event->key()) {
 	case Qt::Key::Key_Up:
 	case Qt::Key::Key_W:
@@ -338,25 +430,44 @@ void Window::keyPressEvent(QKeyEvent *event) {
 		break;
 
 	case Qt::Key::Key_1:
+	{
 		std::time_t result = std::time(nullptr);
 		std::stringstream path;
 		path << "C:\\Users\\Kevin Bein\\Downloads\\" << result << ".png";
 		KM.saveRGBImage(path.str());
-		qDebug() << "Write RGB to disk: " << path.str().c_str();
+
+		std::stringstream message;
+		message << "Saved RGB snapshot at " << path.str() << "";
+		qDebug() << message.str().c_str();
+
+		std::stringstream title;
+		title << "CDP Tests - " << message.str();
+		window()->setWindowTitle(title.str().c_str());
+	}
+	break;
+
+	case Qt::Key::Key_2:
+		mapDepth -= 0.2;
 		break;
-	} 
+
+	case Qt::Key::Key_3:
+		mapDepth += 0.2;
+		break;
+	}
 	//qDebug() << "press key: " << event->key() << " (" << event->text() << ") ";
 	event->accept();
+	updateInfo();
 }
 
-void Window::mousePressEvent(QMouseEvent *event) {
+void MainGLWidget::mousePressEvent(QMouseEvent *event) {
 	mouseStart = event->pos();
 }
 
-void Window::mouseReleaseEvent(QMouseEvent *event) {
+void MainGLWidget::mouseReleaseEvent(QMouseEvent *event) {
+	setFocus();
 }
 
-void Window::mouseMoveEvent(QMouseEvent *event) {
+void MainGLWidget::mouseMoveEvent(QMouseEvent *event) {
 	if (event->buttons() == Qt::LeftButton) {
 		const auto deltaTime = 1.0;
 		auto mouseX = event->pos().x() - mouseStart.x();
@@ -377,25 +488,25 @@ void Window::mouseMoveEvent(QMouseEvent *event) {
 		up = QVector3D::crossProduct(right, direction);
 
 		mouseStart = event->pos();
-		
-		update();
+
+		updateInfo();
 	}
 	event->accept();
 }
 
-void Window::wheelEvent(QWheelEvent *event) {
+void MainGLWidget::wheelEvent(QWheelEvent *event) {
 	int numDegrees = event->delta() / 8;
 	int numSteps = numDegrees / 15;
 
 	if (event->orientation() == Qt::Vertical) {
 		FoV -= 5.0 * numSteps;
 
-		update();
+		updateInfo();
 	}
 	event->accept();
 }
 
-void Window::teardownGL()
+void MainGLWidget::teardownGL()
 {
 	killTimer(kinectTimerId);
 
@@ -405,14 +516,38 @@ void Window::teardownGL()
 	delete kinectProgram;
 }
 
-void Window::printVersionInformation()
+void MainGLWidget::updateInfo()
+{
+	printInformation();
+	QWidget::update();
+}
+
+void MainGLWidget::printInformation()
+{
+	std::stringstream output;
+
+	output << "QVector3D position    = QVector3D(" << position.x() << ", " << position.y() << ", " << position.z() << ");" << std::endl;
+	output << "QVector3D direction   = QVector3D(" << direction.x() << ", " << direction.y() << ", " << direction.z() << ");" << std::endl;
+	output << "QVector3D right       = QVector3D(" << right.x() << ", " << right.y() << ", " << right.z() << ");" << std::endl;
+	output << "QVector3D up          = QVector3D(" << up.x() << ", " << up.y() << ", " << up.z() << ");" << std::endl;
+	output << "float FoV             = " << FoV << ";" << std::endl;
+	output << "float horizontalAngle = " << horizontalAngle << ";" << std::endl;
+	output << "float verticalAngle   = " << verticalAngle << ";" << std::endl;
+
+	output << "" << std::endl;
+
+	emit setOutput(QString::fromStdString(output.str()));
+}
+
+void MainGLWidget::printVersionInformation()
 {
 	QString glType;
 	QString glVersion;
 	QString glProfile;
 
 	// Get Version Information
-	glType = (context()->isOpenGLES()) ? "OpenGL ES" : "OpenGL";
+	auto ctx = (QOpenGLContext*) this->context();
+	glType = (ctx->isOpenGLES()) ? "OpenGL ES" : "OpenGL";
 	glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
 
 	// Get Profile Information
