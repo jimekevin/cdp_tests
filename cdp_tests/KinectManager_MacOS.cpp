@@ -18,7 +18,7 @@
 
 // https://openkinect.github.io/libfreenect2/
 
-int KinectManager::init() {
+int KinectManager::initialize() {
     libfreenect2::setGlobalLogger(libfreenect2::createConsoleLogger(libfreenect2::Logger::Debug));
 
     if(freenect2.enumerateDevices() == 0) {
@@ -60,6 +60,11 @@ int KinectManager::init() {
     std::cout << "Device firmware: " << dev->getFirmwareVersion() << std::endl;
 
     return 0;
+}
+
+void KinectManager::terminate() {
+	dev->stop();
+	dev->close();
 }
 
 long KinectManager::AcquireLatestFrame() {

@@ -57,6 +57,9 @@
     <ClCompile Include="OutputTextBrowser.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="RecordVideoPushButton.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vertex.h">
@@ -99,6 +102,9 @@
       <Filter>Generated Files</Filter>
     </QtMoc>
     <QtMoc Include="OutputTextBrowser.h">
+      <Filter>Generated Files</Filter>
+    </QtMoc>
+    <QtMoc Include="RecordVideoPushButton.h">
       <Filter>Generated Files</Filter>
     </QtMoc>
   </ItemGroup>

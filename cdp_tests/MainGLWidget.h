@@ -35,9 +35,13 @@ public slots:
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
 
+	void recordVideo();
+
 signals:
 	void logMessage(std::string message);
 	void setOutput(QString output);
+	void startedRecordingVideo();
+	void stoppedRecordingVideo();
 
 private:
 	// OpenGL State Information
@@ -56,7 +60,7 @@ private:
 	QOpenGLShaderProgram *mapProgram;
 	QOpenGLVertexArrayObject mapVAO;
 	QOpenGLBuffer mapBuffer;
-	float mapDepth = 2.0f;
+	float mapDepth = 2.4f;
 
 	//QVector3D position = QVector3D(0.381632, 0.809913, -1.56082);
 	//QVector3D direction = QVector3D(-0.116402, -0.159318, 0.980341);

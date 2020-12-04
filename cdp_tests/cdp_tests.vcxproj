@@ -197,12 +197,14 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="MainGLWidget.cpp" />
     <ClCompile Include="OutputTextBrowser.cpp" />
+    <ClCompile Include="RecordVideoPushButton.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="KinectManager_Windows.h" />
     <QtMoc Include="MainGLWidget.h" />
     <QtMoc Include="MainWindow.h" />
     <QtMoc Include="OutputTextBrowser.h" />
+    <QtMoc Include="RecordVideoPushButton.h" />
     <ClInclude Include="vertex.h" />
   </ItemGroup>
   <ItemGroup>

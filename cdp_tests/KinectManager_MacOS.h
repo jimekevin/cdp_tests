@@ -47,7 +47,8 @@ public:
       return i;
   }
 
-  int init();
+  int initialize();
+  void terminate();
 
   long AcquireLatestFrame();
   void ReleaseLatestFrame();

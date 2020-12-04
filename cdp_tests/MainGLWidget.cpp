@@ -171,10 +171,15 @@ static const GLfloat map_plane_vertices[] = {
 	{ x - w/2, y + h/2, z, r, g, b }, \
 	{ x + w/2, y + h/2, z, r, g, b }, \
 }
+float planeWidth = 1.2f;
+float planeHeight = 0.6f;
+float planeX = -0.25; 
 static const GLfloat map_vertices[][6][6] = {
-	MAKE_RECT(0.0f, 0.0f, 0.50f, 4.0f, 4.0f, 0.5f, 0.5f, 0.5f), // Plane
-	MAKE_RECT(0.0f, 0.0f, 0.4999f, 1.0f, 1.0f, 0.0f, 0.7f, 0.0f), // Building 1
-	MAKE_RECT(1.0f, 1.0f, 0.4999f, 0.5f, 0.5f, 0.0f, 1.0f, 0.2f), // Building 2
+	//MAKE_RECT(0.0f, 0.0f, 0.50f, 4.0f, 4.0f, 0.5f, 0.5f, 0.5f), // Plane
+	//MAKE_RECT(0.0f, 0.0f, 0.4999f, 1.0f, 1.0f, 0.0f, 0.7f, 0.0f), // Building 1
+	//MAKE_RECT(1.0f, 1.0f, 0.4999f, 0.5f, 0.5f, 0.0f, 1.0f, 0.2f), // Building 2
+	MAKE_RECT(-0.2f, 0.25f, 0.0f, 1.2f, 0.65f, 0.5f, 0.5f, 0.5f), // Plane
+	MAKE_RECT(0.0f, 0.0f, +0.0001f, 1.0f, 1.0f, 0.0f, 0.7f, 0.0f), // Building 1
 };
 /*static const GLfloat map_vertices[][6][6] = { {
 -0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f, // Top-left
@@ -297,6 +302,7 @@ void MainGLWidget::paintGL()
 
 	QMatrix4x4 projection;
 	projection.perspective(FoV, width() / (GLdouble)height(), 0.1, 100.0);
+	auto w = width();
 
 	mapProgram->bind();
 	{
@@ -513,6 +519,7 @@ void MainGLWidget::teardownGL()
 	kinectDepthBuffer.destroy();
 	kinectRGBBuffer.destroy();
 	kinectVAO.destroy();
+
 	delete kinectProgram;
 }
 
@@ -564,4 +571,13 @@ void MainGLWidget::printVersionInformation()
 
 	// qPrintable() will print our QString w/o quotes around it.
 	qDebug() << qPrintable(glType) << qPrintable(glVersion) << "(" << qPrintable(glProfile) << ")";
+}
+
+void MainGLWidget::recordVideo() {
+	//if (!KM.startVideoRecording()) {
+	//	return;
+	//}
+
+	emit startedRecordingVideo();
+	//emit stoppedRecordingVideo();
 }

@@ -32,6 +32,8 @@ private:
 
   IMultiSourceFrame *lastFrame = nullptr;
 
+  bool videoRecording = false;
+
 public:
   KinectManager(const KinectManager&) = delete;
   KinectManager& operator=(const KinectManager &) = delete;
@@ -43,7 +45,8 @@ public:
       return test;
   }
 
-  int init();
+  int initialize();
+  void terminate();
   
   long AcquireLatestFrame();
   void ReleaseLatestFrame();
@@ -52,4 +55,6 @@ public:
   void getRgbData(QOpenGLBuffer *glBuffer);
 
   void saveRGBImage(std::string path);
+  void startVideoRecording(std::string path);
+  void stopVideoRecording();
 };

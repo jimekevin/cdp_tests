@@ -1,14 +1,15 @@
-#pragma once
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   #pragma once
 
 #include <Kinect.h>
 #include "KinectManager_Windows.h"
 #include <opencv2/imgproc.hpp>
 #include <QtGui/QOpenGLBuffer>
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include <opencv2/imgcodecs.hpp>
 
-int KinectManager::init() {
+int KinectManager::initialize() {
     if (FAILED(GetDefaultKinectSensor(&sensor)) || !sensor) {
         return S_FALSE;
     }
@@ -23,8 +24,17 @@ int KinectManager::init() {
     return S_OK;
 }
 
+void KinectManager::terminate() {
+	std::cout << "asdfasd";
+	sensor->Close();
+}
+
 long KinectManager::AcquireLatestFrame() {
-	return reader->AcquireLatestFrame(&lastFrame);
+	auto result = reader->AcquireLatestFrame(&lastFrame);
+	if (result) {
+		frameCount++;
+	}
+	return result;
 }
 
 void KinectManager::ReleaseLatestFrame() {
@@ -128,4 +138,34 @@ void KinectManager::saveRGBImage(std::string path) {
     cv::Mat flippedFrame;
     cv::flip(frameBGRA, flippedFrame, 1);
     cv::imwrite(path, flippedFrame);
+}
+
+void KinectManager::startVideoRecording(std::string path) {
+	if (videoRecording) {
+		return;
+	}
+
+	// Thread dispatch 
+
+	std::ofstream ofs(path, std::ofstream::out | std::ofstream::trunc);
+	int count = 0;
+	while (videoRecording) {
+		if (count >= frameCount) {
+			continue;
+		}
+
+		ofs.write((char*)depth2xyz, WIDTH * HEIGHT * 4);
+		ofs.write((char*)rgbimage, COLORWIDTH * COLORHEIGHT * 4);
+		std::cout << "Wrote frame " << frameCount << std::endl;
+		count++;
+	}
+	ofs.close();
+}
+
+void KinectManager::stopVideoRecording() {
+	if (!videoRecording) {
+		return;
+	}
+
+	videoRecording = false;
 }
