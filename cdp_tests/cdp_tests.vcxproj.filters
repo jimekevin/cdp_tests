@@ -60,6 +60,15 @@
     <ClCompile Include="RecordVideoPushButton.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="Filter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="filters\ThresholdFilter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pipeline.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vertex.h">
@@ -67,6 +76,15 @@
     </ClInclude>
     <ClInclude Include="KinectManager_Windows.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Filter.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="filters\ThresholdFilter.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

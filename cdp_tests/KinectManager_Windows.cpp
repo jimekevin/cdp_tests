@@ -25,7 +25,6 @@ int KinectManager::initialize() {
 }
 
 void KinectManager::terminate() {
-	std::cout << "asdfasd";
 	sensor->Close();
 }
 
@@ -40,7 +39,19 @@ long KinectManager::AcquireLatestFrame() {
 void KinectManager::ReleaseLatestFrame() {
 }
 
-void KinectManager::getDepthData(QOpenGLBuffer *glBuffer) {
+const int KinectManager::getDepthSize() {
+	return WIDTH * HEIGHT * 3 * sizeof(float);
+}
+
+const int KinectManager::getRgbSize() {
+	return WIDTH * HEIGHT * 3 * sizeof(float);
+}
+
+void KinectManager::writeDepthData(void *dest) {
+	if (dest == NULL) {
+		return;
+	}
+
     IDepthFrame* depthframe;
     IDepthFrameReference* frameref = NULL;
 
@@ -60,12 +71,12 @@ void KinectManager::getDepthData(QOpenGLBuffer *glBuffer) {
     HRESULT result;
     result = depthframe->AccessUnderlyingBuffer(&sz, &buf);
 
-    glBuffer->allocate(sz * 3 * sizeof(float));
+    /*glBuffer->allocate(sz * 3 * sizeof(float));
     glBuffer->bind();
     auto dest = glBuffer->mapRange(0, sz * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
     if (dest == NULL) {
         return;
-    }
+    }*/
 
     result = mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2xyz);
     float* fdest = (float*)dest;
@@ -77,14 +88,18 @@ void KinectManager::getDepthData(QOpenGLBuffer *glBuffer) {
 
     mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
 
-    glBuffer->unmap();	
+    //glBuffer->unmap();	
 	
 	if (depthframe) {
 		depthframe->Release();
 	}
 }
 
-void KinectManager::getRgbData(QOpenGLBuffer *glBuffer) {
+void KinectManager::writeRgbData(void *dest) {
+	if (dest == NULL) {
+		return;
+	}
+
     IColorFrame* colorframe;
     IColorFrameReference* frameref = NULL;
 
@@ -98,11 +113,11 @@ void KinectManager::getRgbData(QOpenGLBuffer *glBuffer) {
         return;
     }
 
-    glBuffer->allocate(WIDTH * HEIGHT * 3 * sizeof(float));
+    /*glBuffer->allocate(WIDTH * HEIGHT * 3 * sizeof(float));
     auto dest = glBuffer->mapRange(0, WIDTH * HEIGHT * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
     if (dest == NULL) {
         return;
-    }
+    }*/
 
     colorframe->CopyConvertedFrameDataToArray(COLORWIDTH * COLORHEIGHT * 4, rgbimage, ColorImageFormat_Rgba);
 
@@ -120,11 +135,11 @@ void KinectManager::getRgbData(QOpenGLBuffer *glBuffer) {
             *fdest++ = rgbimage[4 * idx + 0] / 255.;
             *fdest++ = rgbimage[4 * idx + 1] / 255.;
             *fdest++ = rgbimage[4 * idx + 2] / 255.;
+			// Don't copy alpha channel
         }
-        // Don't copy alpha channel
     }
 
-    glBuffer->unmap();
+    //glBuffer->unmap();
 
 	if (colorframe) {
 		colorframe->Release();

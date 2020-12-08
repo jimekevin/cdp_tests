@@ -10,6 +10,9 @@
 #include <QOpenGLDebugLogger>
 #include <QtWidgets/QOpenGLWidget>
 
+#include "Pipeline.h"
+#include "KinectManager_Windows.h"
+
 class QOpenGLShaderProgram;
 
 class MainGLWidget : public QOpenGLWidget,
@@ -21,6 +24,11 @@ class MainGLWidget : public QOpenGLWidget,
 public:
 	explicit MainGLWidget(QWidget *parent = 0);
 	~MainGLWidget();
+
+	// Threshold
+	float minDistance = 0.5f;
+	float maxDistance = 3.0f;
+	ThresholdFilter *thresholdFilter = new ThresholdFilter(minDistance, maxDistance);
 
 public slots:
 	void initializeGL();
@@ -45,17 +53,20 @@ signals:
 
 private:
 	// OpenGL State Information
-	QOpenGLBuffer m_vertex;
-	QOpenGLVertexArrayObject m_object;
-	QOpenGLShaderProgram *m_program;
+	//QOpenGLBuffer m_vertex;
+	//QOpenGLVertexArrayObject m_object;
+	//QOpenGLShaderProgram *m_program;
 
 	QOpenGLShaderProgram *kinectProgram;
 	QOpenGLVertexArrayObject kinectVAO;
 	QOpenGLBuffer kinectBuffer;
 	QOpenGLBuffer kinectDepthBuffer;
 	QOpenGLBuffer kinectRGBBuffer;
-	unsigned int* kinectDepthData;
-	unsigned int* kinectRGBData;
+
+	Pipeline pipeline;
+
+	cv::Mat depthMat = cv::Mat(KinectManager::HEIGHT, KinectManager::WIDTH, CV_32FC3);
+	cv::Mat rgbMat   = cv::Mat(KinectManager::HEIGHT, KinectManager::WIDTH, CV_32FC3);
 
 	QOpenGLShaderProgram *mapProgram;
 	QOpenGLVertexArrayObject mapVAO;
@@ -84,8 +95,7 @@ private:
 	QPoint mouseStart = QPoint(0.0, 0.0);
 
 	float horizontalAngle = 0.0f; // 3.14f;
-	// vertical angle : 0, look at the horizon
-	float verticalAngle = 0.0f; // 0.0f;
+	float verticalAngle = 0.0f; // look at the horizon
 
 	float speed = 0.05f; // 3 units / second
 	float mouseSpeed = 0.005f;

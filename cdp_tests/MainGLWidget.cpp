@@ -10,6 +10,7 @@
 #include <sstream>
 #include <QFileInfo>
 #include "vertex.h"
+#include "filters/ThresholdFilter.h"
 
 #ifdef APPLE
 #include "KinectManager_MacOS.h"
@@ -198,6 +199,9 @@ static const GLfloat map_vertices[][6][6] = {
 MainGLWidget::MainGLWidget(QWidget *parent)
 	: QOpenGLWidget(parent)
 {
+	// Create pipeline
+	pipeline.addProcessingFilter(thresholdFilter);
+
 	// Make window activ to recieve key strokes 
 	// and be able to handle them in here
 	setFocus();
@@ -301,8 +305,7 @@ void MainGLWidget::paintGL()
 	view.lookAt(position, position + direction, QVector3D(0, 1, 0));
 
 	QMatrix4x4 projection;
-	projection.perspective(FoV, width() / (GLdouble)height(), 0.1, 100.0);
-	auto w = width();
+	projection.perspective(FoV, width() / (GLfloat)height(), 0.1, 100.0);
 
 	mapProgram->bind();
 	{
@@ -363,7 +366,7 @@ void MainGLWidget::paintGL()
 	kinectProgram->release();
 }
 
-void MainGLWidget::timerEvent(QTimerEvent *event)
+void MainGLWidget::timerEvent(QTimerEvent *)
 {
 	auto frameResult = KM.AcquireLatestFrame();
 	if (((long)frameResult) >= 0) {
@@ -375,16 +378,32 @@ void MainGLWidget::timerEvent(QTimerEvent *event)
 		kinectVAO.create();
 		kinectVAO.bind();
 
+		// Get depth + rgb data
+		KM.writeDepthData(depthMat.data);
+		KM.writeRgbData(rgbMat.data);
+
+		// Run pipeline
+		pipeline.process(&depthMat, &rgbMat);
+
+		// Copy to GPU buffer
 		kinectDepthBuffer.create();
 		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 		kinectDepthBuffer.bind();
-		KM.getDepthData(&kinectDepthBuffer);
+		kinectDepthBuffer.allocate(KM.getDepthSize());
+		auto depthBufferDest = kinectDepthBuffer.mapRange(0, KM.getDepthSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+		memcpy_s(depthBufferDest, KM.getDepthSize(), depthMat.data, KM.getDepthSize());
+		//KM.writeDepthData(depthBufferDest);
+		kinectDepthBuffer.unmap();
 		kinectDepthBuffer.release();
 
 		kinectRGBBuffer.create();
 		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
 		kinectRGBBuffer.bind();
-		KM.getRgbData(&kinectRGBBuffer);
+		kinectRGBBuffer.allocate(KM.getRgbSize());
+		auto rgbBufferDest = kinectRGBBuffer.mapRange(0, KM.getRgbSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+		memcpy_s(rgbBufferDest, KM.getRgbSize(), rgbMat.data, KM.getRgbSize());
+		//KM.writeRgbData(rgbBufferDest);
+		kinectRGBBuffer.unmap();
 		kinectRGBBuffer.release();
 
 		kinectVAO.release();
@@ -453,11 +472,11 @@ void MainGLWidget::keyPressEvent(QKeyEvent *event) {
 	break;
 
 	case Qt::Key::Key_2:
-		mapDepth -= 0.2;
+		mapDepth -= 0.2f;
 		break;
 
 	case Qt::Key::Key_3:
-		mapDepth += 0.2;
+		mapDepth += 0.2f;
 		break;
 	}
 	//qDebug() << "press key: " << event->key() << " (" << event->text() << ") ";
@@ -469,7 +488,7 @@ void MainGLWidget::mousePressEvent(QMouseEvent *event) {
 	mouseStart = event->pos();
 }
 
-void MainGLWidget::mouseReleaseEvent(QMouseEvent *event) {
+void MainGLWidget::mouseReleaseEvent(QMouseEvent *) {
 	setFocus();
 }
 

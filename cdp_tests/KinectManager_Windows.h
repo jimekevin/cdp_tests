@@ -1,8 +1,11 @@
-#pragma once
+#ifndef KINECT_MANAGER_WINDOWS_H
+#define KINECT_MANAGER_WINDOWS_H
 
 #include <Kinect.h>
 #include <opencv2/imgproc.hpp>
 #include <QtGui/QOpenGLBuffer>
+
+#include "filters/ThresholdFilter.h"
 
 class KinectManager {
 public:
@@ -14,15 +17,15 @@ public:
 
   IMultiSourceFrameReader* reader;
 
+  ColorSpacePoint depth2rgb[WIDTH * HEIGHT];  // Maps depth pixels to rgb pixels
+  CameraSpacePoint depth2xyz[WIDTH * HEIGHT];
+  unsigned char rgbimage[COLORWIDTH * COLORHEIGHT * 4]; // RGBA 0-255
+
 private:
   KinectManager() {} // Disallow instantiation outside of the class.
 
   IKinectSensor *sensor;
   ICoordinateMapper *mapper; // Converts between depth, color, and 3d coordinates
-
-  ColorSpacePoint depth2rgb[WIDTH * HEIGHT];  // Maps depth pixels to rgb pixels
-  CameraSpacePoint depth2xyz[WIDTH * HEIGHT];
-  unsigned char rgbimage[COLORWIDTH * COLORHEIGHT * 4];
 
   IColorFrameReader *colorFrameReader;
   IDepthFrameReader *depthFrameReader;
@@ -51,10 +54,15 @@ public:
   long AcquireLatestFrame();
   void ReleaseLatestFrame();
 
-  void getDepthData(QOpenGLBuffer *glBuffer);
-  void getRgbData(QOpenGLBuffer *glBuffer);
+  const int getDepthSize();
+  const int getRgbSize();
+
+  void writeDepthData(void *dest);
+  void writeRgbData(void *dest);
 
   void saveRGBImage(std::string path);
   void startVideoRecording(std::string path);
   void stopVideoRecording();
 };
+
+#endif // KINECT_MANAGER_WINDOWS_H

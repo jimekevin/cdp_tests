@@ -192,19 +192,25 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Filter.cpp" />
     <ClCompile Include="KinectManager_Windows.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="MainGLWidget.cpp" />
     <ClCompile Include="OutputTextBrowser.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="RecordVideoPushButton.cpp" />
+    <ClCompile Include="filters\ThresholdFilter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Filter.h" />
+    <ClInclude Include="filters\ThresholdFilter.h" />
     <ClInclude Include="KinectManager_Windows.h" />
     <QtMoc Include="MainGLWidget.h" />
     <QtMoc Include="MainWindow.h" />
     <QtMoc Include="OutputTextBrowser.h" />
     <QtMoc Include="RecordVideoPushButton.h" />
+    <ClInclude Include="Pipeline.h" />
     <ClInclude Include="vertex.h" />
   </ItemGroup>
   <ItemGroup>
