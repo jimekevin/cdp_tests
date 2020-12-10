@@ -1,5 +1,3 @@
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   #pragma once
-
 #include <Kinect.h>
 #include "KinectManager_Windows.h"
 #include <opencv2/imgproc.hpp>
@@ -147,8 +145,12 @@ void KinectManager::writeRgbData(void *dest) {
 }
 
 void KinectManager::saveRGBImage(std::string path) {
-    cv::Mat frameRGB(COLORHEIGHT, COLORWIDTH, CV_8UC4, rgbimage);
-    cv::Mat frameBGRA(COLORHEIGHT, COLORWIDTH, CV_8UC4);
+	saveRGBImage(path, rgbimage, COLORWIDTH, COLORHEIGHT);
+}
+
+void KinectManager::saveRGBImage(std::string path, unsigned char *input, int width, int height) {
+    cv::Mat frameRGB(height, width, CV_8UC4, input);
+    cv::Mat frameBGRA(height, width, CV_8UC4);
     cv::cvtColor(frameRGB, frameBGRA, cv::COLOR_RGBA2BGRA);
     cv::Mat flippedFrame;
     cv::flip(frameBGRA, flippedFrame, 1);

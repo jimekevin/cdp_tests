@@ -16,7 +16,7 @@ public:
 	const float getMaxDistance();
 	void ThresholdFilter::updateMinDistance(float minDist);
 	void ThresholdFilter::updateMaxDistance(float maxDist);
-	void apply(cv::Mat *depthMat, cv::Mat *rgbMat);
+	void apply(cv::Mat& depthMat, cv::Mat& rgbMat);
 };
 
 #endif // THRESHOLD_FILTER_H

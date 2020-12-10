@@ -11,6 +11,8 @@
 #include <QFileInfo>
 #include "vertex.h"
 #include "filters/ThresholdFilter.h"
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
 
 #ifdef APPLE
 #include "KinectManager_MacOS.h"
@@ -201,6 +203,7 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 {
 	// Create pipeline
 	pipeline.addProcessingFilter(thresholdFilter);
+	pipeline.addProcessingFilter(cannyFilter);
 
 	// Make window activ to recieve key strokes 
 	// and be able to handle them in here
@@ -222,7 +225,8 @@ void MainGLWidget::initializeGL()
 
 	// Set global information
 	//glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.9f, 0.9f, 0.99f, 1.0f);
 	glClearDepth(1.0f);
 	glEnable(GL_PROGRAM_POINT_SIZE);
 	glEnable(GL_DEPTH_TEST);
@@ -383,7 +387,11 @@ void MainGLWidget::timerEvent(QTimerEvent *)
 		KM.writeRgbData(rgbMat.data);
 
 		// Run pipeline
-		pipeline.process(&depthMat, &rgbMat);
+		auto t1 = depthMat.type();
+		auto t2 = rgbMat.type();
+		pipeline.process(depthMat, rgbMat);
+		auto t3 = depthMat.type();
+		auto t4 = rgbMat.type();
 
 		// Copy to GPU buffer
 		kinectDepthBuffer.create();
@@ -454,12 +462,25 @@ void MainGLWidget::keyPressEvent(QKeyEvent *event) {
 		position -= direction * deltaTime * speed;
 		break;
 
-	case Qt::Key::Key_1:
+	case Qt::Key::Key_Z:
+	case Qt::Key::Key_U:
 	{
 		std::time_t result = std::time(nullptr);
 		std::stringstream path;
 		path << "C:\\Users\\Kevin Bein\\Downloads\\" << result << ".png";
-		KM.saveRGBImage(path.str());
+		if (event->key() == Qt::Key::Key_Z) {
+			KM.saveRGBImage(path.str());
+		}
+		else {
+			cv::Mat image = rgbMat.clone();
+			cv::cvtColor(image, image, cv::COLOR_RGB2BGRA);
+			cv::flip(image, image, 1);
+			//image.convertTo(image, CV_8UC3);
+			//image.convertTo(image, CV_8UC4);
+			//KM.saveRGBImage(path.str(), rgbMat.data, rgbMat.cols, image.rows);
+			//cv::imwrite(path.str(), image);
+			cv::imshow(path.str(), image);
+		}
 
 		std::stringstream message;
 		message << "Saved RGB snapshot at " << path.str() << "";
@@ -471,11 +492,11 @@ void MainGLWidget::keyPressEvent(QKeyEvent *event) {
 	}
 	break;
 
-	case Qt::Key::Key_2:
+	case Qt::Key::Key_1:
 		mapDepth -= 0.2f;
 		break;
 
-	case Qt::Key::Key_3:
+	case Qt::Key::Key_2:
 		mapDepth += 0.2f;
 		break;
 	}

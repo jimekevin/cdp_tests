@@ -5,8 +5,6 @@
 #include <opencv2/imgproc.hpp>
 #include <QtGui/QOpenGLBuffer>
 
-#include "filters/ThresholdFilter.h"
-
 class KinectManager {
 public:
   const static int DELAY_MS = 33;
@@ -61,6 +59,7 @@ public:
   void writeRgbData(void *dest);
 
   void saveRGBImage(std::string path);
+  void saveRGBImage(std::string path, unsigned char *input, int width, int height);
   void startVideoRecording(std::string path);
   void stopVideoRecording();
 };

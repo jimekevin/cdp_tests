@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::MainWindow
 	connect(ui->mainGLWidget, SIGNAL(startedRecordingVideo()), ui->recordVideoPushButton, SLOT(startRecordingVideo()));
 	connect(ui->mainGLWidget, SIGNAL(stoppedRecordingVideo()), ui->recordVideoPushButton, SLOT(stopRecordingVideo()));
 
+	// Distance threshold sliders
 	connect(ui->minDistanceSlider, &QSlider::valueChanged, [this](int value) {
 		float minDist = value / 100.0f;
 		ui->mainGLWidget->thresholdFilter->updateMinDistance(minDist);
@@ -39,6 +40,24 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::MainWindow
 	});
 	ui->minDistanceSlider->setValue(ui->mainGLWidget->thresholdFilter->getMinDistance() * 100);
 	ui->maxDistanceSlider->setValue(ui->mainGLWidget->thresholdFilter->getMaxDistance() * 100);
+
+	// Canny threshold sliders
+	connect(ui->cannyThreshold1Slider, &QSlider::valueChanged, [this](int value) {
+		int threshold1 = value;
+		ui->mainGLWidget->cannyFilter->updateThreshold1(threshold1);
+		std::stringstream ss;
+		ss << "Threshold 1: " << threshold1;
+		ui->cannyThreshold1Label->setText(QString(ss.str().c_str()));
+	});
+	connect(ui->cannyThreshold2Slider, &QSlider::valueChanged, [this](int value) {
+		int threshold2 = value;
+		ui->mainGLWidget->cannyFilter->updateThreshold2(threshold2);
+		std::stringstream ss;
+		ss << "Threshold 2: " << threshold2;
+		ui->cannyThreshold2Label->setText(QString(ss.str().c_str()));
+	});
+	ui->cannyThreshold1Slider->setValue(ui->mainGLWidget->cannyFilter->getThreshold1());
+	ui->cannyThreshold2Slider->setValue(ui->mainGLWidget->cannyFilter->getThreshold2());
 }
 
 MainWindow::~MainWindow()

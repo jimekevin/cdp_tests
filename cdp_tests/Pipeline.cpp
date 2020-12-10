@@ -1,7 +1,7 @@
 #include "Pipeline.h"
 #include "Filter.h"
 
-void Pipeline::process(cv::Mat *depthMat, cv::Mat *rgbMat) {
+void Pipeline::process(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	for (const auto &filter : filters) {
 		if (!filter->enabled) {
 			continue;

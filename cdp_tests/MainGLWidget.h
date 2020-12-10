@@ -13,6 +13,9 @@
 #include "Pipeline.h"
 #include "KinectManager_Windows.h"
 
+#include "filters/ThresholdFilter.h"
+#include "filters/CannyFilter.h"
+
 class QOpenGLShaderProgram;
 
 class MainGLWidget : public QOpenGLWidget,
@@ -29,6 +32,11 @@ public:
 	float minDistance = 0.5f;
 	float maxDistance = 3.0f;
 	ThresholdFilter *thresholdFilter = new ThresholdFilter(minDistance, maxDistance);
+
+	// Canny
+	int cannyThreshold1 = 100;
+	int cannyThreshold2 = 200;
+	CannyFilter *cannyFilter = new CannyFilter(cannyThreshold1, cannyThreshold2);
 
 public slots:
 	void initializeGL();
