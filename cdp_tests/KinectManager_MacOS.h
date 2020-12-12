@@ -11,9 +11,19 @@
 
 class KinectManager {
 
+public:
+  const static int DELAY_MS = 33;
+  const static int WIDTH = 512;
+  const static int HEIGHT = 424;
+  const static int COLORWIDTH = 1920;
+  const static int COLORHEIGHT = 1080;
+
+  unsigned char rgbimage[COLORWIDTH * COLORHEIGHT * 4]{};
+
 private:
   int frameCount = 0;
   long long lastFrameFetch = 0;
+  bool videoRecording = false;
 
   libfreenect2::Freenect2 freenect2;
   libfreenect2::Freenect2Device *dev = nullptr;
@@ -25,17 +35,15 @@ private:
   libfreenect2::Frame *irFrame = nullptr;
   libfreenect2::Frame *depthFrame = nullptr;
 
+  libfreenect2::Frame undistorted = libfreenect2::Frame(WIDTH, HEIGHT, 4);
+  libfreenect2::Frame registered = libfreenect2::Frame(WIDTH, HEIGHT, 4);
+
   std::string serial;
   bool startedStreams = false;
 
-  KinectManager() = default;
+  KinectManager() = default; // Disallow instantiation outside of the class.
 
 public:
-  const static int DELAY_MS = 33;
-  const static int WIDTH = 512;
-  const static int HEIGHT = 424;
-  const static int COLORWIDTH = 1920;
-  const static int COLORHEIGHT = 1080;
 
   KinectManager(const KinectManager&) = delete;
   KinectManager& operator=(const KinectManager &) = delete;
@@ -53,11 +61,16 @@ public:
   long AcquireLatestFrame();
   void ReleaseLatestFrame();
 
-  void getDepthData(QOpenGLBuffer *glBuffer);
-  void getRgbData(QOpenGLBuffer *glBuffer);
-  //void getDepthAndRGBData(QOpenGLBuffer *glBuffer);
+  const int getDepthSize();
+  const int getRgbSize();
 
-  void saveRGBImage(std::string path);
+  void writeDepthData(void *dest);
+  void writeRgbData(void *dest);
+
+  void saveRGBImage(const std::string& path);
+  void saveRGBImage(const std::string& path, unsigned char *input, int width, int height);
+  void startVideoRecording(const std::string& path);
+  void stopVideoRecording();
 };
 
 #endif // KINECTMANAGER_MACOS_H

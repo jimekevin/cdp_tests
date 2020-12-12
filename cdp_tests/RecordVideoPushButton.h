@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QtWidgets\QPushButton>
+#include <QtWidgets/QPushButton>
 
 class RecordVideoPushButton :
 	public QPushButton

@@ -218,10 +218,10 @@
        <item row="1" column="2">
         <widget class="QSlider" name="maxDistanceSlider">
          <property name="maximum">
-          <number>400</number>
+          <number>1000</number>
          </property>
          <property name="value">
-          <number>400</number>
+          <number>1000</number>
          </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -231,7 +231,7 @@
        <item row="1" column="0">
         <widget class="QLabel" name="maxDistanceLabel">
          <property name="text">
-          <string>Max distance: 4.0f</string>
+          <string>Max distance: 10.0f</string>
          </property>
         </widget>
        </item>

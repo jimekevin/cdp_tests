@@ -17,7 +17,13 @@ int main(int argc, char **argv) {
 	QApplication::setOrganizationName("cdp.ai.ar.tum.de");
 	QApplication::setApplicationName("Collaborative Design Platform");
 
-	KinectManager::instance().initialize();
+    QSurfaceFormat format;
+    format.setVersion(4, 1);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setOption(QSurfaceFormat::DebugContext);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    KinectManager::instance().initialize();
 
 	MainWindow window;
 	window.show();

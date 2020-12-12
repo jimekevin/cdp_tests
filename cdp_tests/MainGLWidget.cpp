@@ -13,6 +13,7 @@
 #include "filters/ThresholdFilter.h"
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <string.h>
 
 #ifdef APPLE
 #include "KinectManager_MacOS.h"
@@ -234,17 +235,7 @@ void MainGLWidget::initializeGL()
 
 	//glEnable(GL_DEBUG_OUTPUT);
 
-	QSurfaceFormat format;
-	format.setMajorVersion(4);
-	format.setMinorVersion(1);
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	format.setOption(QSurfaceFormat::DebugContext);
-
-	//QOpenGLContext *ctx = QOpenGLContext::currentContext();
-	auto ctx = (QOpenGLContext*)context();
-	ctx->setFormat(format);
 	logger = new QOpenGLDebugLogger(this);
-
 	logger->initialize(); // initializes in the current context, i.e. ctx
 
 	// Cull triangles which normal is not towards the camera = you cannnot go inside objects
@@ -399,7 +390,7 @@ void MainGLWidget::timerEvent(QTimerEvent *)
 		kinectDepthBuffer.bind();
 		kinectDepthBuffer.allocate(KM.getDepthSize());
 		auto depthBufferDest = kinectDepthBuffer.mapRange(0, KM.getDepthSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
-		memcpy_s(depthBufferDest, KM.getDepthSize(), depthMat.data, KM.getDepthSize());
+		memcpy(depthBufferDest, depthMat.data, KM.getDepthSize());
 		//KM.writeDepthData(depthBufferDest);
 		kinectDepthBuffer.unmap();
 		kinectDepthBuffer.release();
@@ -409,7 +400,7 @@ void MainGLWidget::timerEvent(QTimerEvent *)
 		kinectRGBBuffer.bind();
 		kinectRGBBuffer.allocate(KM.getRgbSize());
 		auto rgbBufferDest = kinectRGBBuffer.mapRange(0, KM.getRgbSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
-		memcpy_s(rgbBufferDest, KM.getRgbSize(), rgbMat.data, KM.getRgbSize());
+		memcpy(rgbBufferDest, rgbMat.data, KM.getRgbSize());
 		//KM.writeRgbData(rgbBufferDest);
 		kinectRGBBuffer.unmap();
 		kinectRGBBuffer.release();

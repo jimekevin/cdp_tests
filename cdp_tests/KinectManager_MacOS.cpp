@@ -12,6 +12,8 @@
 #include <opencv2/imgcodecs.hpp>
 
 #include <QtGui/QOpenGLBuffer>
+#include <utility>
+#include <fstream>
 
 //typedef struct { float X, Y; } ColorSpacePoint;
 //typedef struct { float X, Y, Z; } CameraSpacePoint;
@@ -51,9 +53,9 @@ int KinectManager::initialize() {
     if (!dev->start())  {
         return -1;
     }
-    if (!dev->startStreams(true, true)) {
+    /*if (!dev->startStreams(true, true)) {
         return -1;
-    }
+    }*/
 
     startedStreams = true;
     std::cout << "Device serial: " << dev->getSerialNumber() << std::endl;
@@ -78,6 +80,10 @@ long KinectManager::AcquireLatestFrame() {
     irFrame = frames[libfreenect2::Frame::Ir];
     depthFrame = frames[libfreenect2::Frame::Depth];
 
+    // Map color images onto depth images
+    auto registration = new libfreenect2::Registration(dev->getIrCameraParams(), dev->getColorCameraParams());
+    registration->apply(rgbFrame, depthFrame, &undistorted, &registered);
+
     return 0;
 }
 
@@ -87,55 +93,70 @@ void KinectManager::ReleaseLatestFrame() {
     }
 }
 
-void KinectManager::getDepthData(QOpenGLBuffer *glBuffer) {
-    if (depthFrame == nullptr) {
-        return;
-    }
+const int KinectManager::getDepthSize() {
+    return WIDTH * HEIGHT * 3 * sizeof(float);
+}
 
-    size_t sz = depthFrame->width * depthFrame->height;
-    glBuffer->allocate(sz * 3 * sizeof(float));
-    glBuffer->bind();
-    auto dest = glBuffer->mapRange(0, sz * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+const int KinectManager::getRgbSize() {
+    return WIDTH * HEIGHT * 3 * sizeof(float);
+}
+
+struct DepthPoint {
+  float x;
+  float y;
+  float z;
+};
+
+void KinectManager::writeDepthData(void *dest) {
     if (dest == nullptr) {
         return;
     }
 
-    // TODO: How to do this?
-    //auto result = mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2xyz);
-    float* fdest = (float*)dest;
+    size_t sz = depthFrame->width * depthFrame->height;
+    float maxZ = -1.0f;
+    auto fdest = (float*)dest;
     for (unsigned int i = 0; i < sz; i++) {
-        *fdest++ = depthFrame->data[i + 0];
-        *fdest++ = depthFrame->data[i + 1];
-        *fdest++ = depthFrame->data[i + 2];
+//        auto dp = reinterpret_cast<DepthPoint&>(depthFrame->data[4 * i]);
+//        auto x = dp.x;
+//        auto y = dp.y;
+//        auto z = dp.z;
+//        auto x2 = (float)depthFrame->data[4 * i + 0];
+//        auto y2 = (float)depthFrame->data[4 * i + 1];
+//        auto z2 = (float)depthFrame->data[4 * i + 2];
+        //*fdest++ = dp.x / 1000.0f; //(float)depthFrame->data[4 * i + 0] / 100.0f;
+        //*fdest++ = dp.y / 1000.0f; //(float)depthFrame->data[4 * i + 1] / 100.0f;
+        //*fdest++ = dp.z / 1000.0f; //(float)depthFrame->data[4 * i + 2] / 100.0f;
+        //*fdest++ = depthFrame->data[4 * i + 0] / 1000.0f;
+        //*fdest++ = depthFrame->data[4 * i + 1] / 1000.0f;
+        //*fdest++ = depthFrame->data[4 * i + 2] / 1000.0f;
+        auto x = ((float)(i % depthFrame->width) / depthFrame->width * 2.0f) - 1.0f;
+        auto y = 1.0f - ((float)((int)(i / depthFrame->width)) / depthFrame->height * 2.0f);
+        auto z = reinterpret_cast<float&>(registered->data[depthFrame->bytes_per_pixel * i]) / 1000.f;
+        *fdest++ = x;
+        *fdest++ = y;
+        *fdest++ = z;
+        maxZ = z > maxZ ? z : maxZ;
     }
-
-    //mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
-
-    glBuffer->unmap();
+    auto test = 1;
 }
 
-void KinectManager::getRgbData(QOpenGLBuffer *glBuffer) {
-    // Map color images onto depth images
-    auto registration = new libfreenect2::Registration(dev->getIrCameraParams(), dev->getColorCameraParams());
-    libfreenect2::Frame undistorted(WIDTH, HEIGHT, 4);
-    libfreenect2::Frame registered(WIDTH, HEIGHT, 4);
-    registration->apply(rgbFrame, depthFrame, &undistorted, &registered);
-
-    if (rgbFrame == nullptr || depthFrame == nullptr) {
+void KinectManager::writeRgbData(void *dest) {
+    if (dest == nullptr) {
         return;
     }
 
-    glBuffer->allocate(WIDTH * HEIGHT * 3 * sizeof(float));
-    auto dest = glBuffer->mapRange(0, WIDTH * HEIGHT * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
-    if (dest == NULL) {
+    /*if (rgbFrame == nullptr || depthFrame == nullptr) {
         return;
-    }
+    }*/
 
-    float* fdest = (float*)dest;
+    auto fdest = (float*)dest;
     for (int i = 0; i < WIDTH * HEIGHT; i++) {
-        *fdest++ = registered.data[i + 0];
-        *fdest++ = registered.data[i + 1];
-        *fdest++ = registered.data[i + 2];
+        *fdest++ = 1.0f;
+        *fdest++ = 0.0f;
+        *fdest++ = 0.0f;
+        //*fdest++ = registered.data[4 * i + 2];
+        //*fdest++ = registered.data[4 * i + 1];
+        //*fdest++ = registered.data[4 * i + 0];
         //ColorSpacePoint* p = reinterpret_cast<ColorSpacePoint*>(&registered.data[i]);
         // Check if color pixel coordinates are in bounds
 //        if (p->X < 0 || p->Y < 0 || p->X > COLORWIDTH || p->Y > COLORHEIGHT) {
@@ -151,17 +172,52 @@ void KinectManager::getRgbData(QOpenGLBuffer *glBuffer) {
         //}
         // Don't copy alpha channel
     }
-
-    glBuffer->unmap();
 }
 
-void KinectManager::saveRGBImage(std::string path) {
-    cv::Mat frameRGB(COLORHEIGHT, COLORWIDTH, CV_8UC4, rgbFrame->data);
-    cv::Mat frameBGRA(COLORHEIGHT, COLORWIDTH, CV_8UC4);
+void KinectManager::saveRGBImage(const std::string& path) {
+    saveRGBImage(path, rgbimage, COLORWIDTH, COLORHEIGHT);
+}
+
+void KinectManager::saveRGBImage(const std::string& path, unsigned char *input, int width, int height) {
+    cv::Mat frameRGB(height, width, CV_8UC4, input);
+    cv::Mat frameBGRA(height, width, CV_8UC4);
     cv::cvtColor(frameRGB, frameBGRA, cv::COLOR_RGBA2BGRA);
     cv::Mat flippedFrame;
     cv::flip(frameBGRA, flippedFrame, 1);
     cv::imwrite(path, flippedFrame);
+}
+
+void KinectManager::startVideoRecording(const std::string& path) {
+    return;
+    /*
+    if (videoRecording) {
+        return;
+    }
+
+    // Thread dispatch
+
+    std::ofstream ofs(path, std::ofstream::out | std::ofstream::trunc);
+    int count = 0;
+    while (videoRecording) {
+        if (count >= frameCount) {
+            continue;
+        }
+
+        ofs.write((char*)depth2xyz, WIDTH * HEIGHT * 4);
+        ofs.write((char*)rgbimage, COLORWIDTH * COLORHEIGHT * 4);
+        std::cout << "Wrote frame " << frameCount << std::endl;
+        count++;
+    }
+    ofs.close();
+     */
+}
+
+void KinectManager::stopVideoRecording() {
+    if (!videoRecording) {
+        return;
+    }
+
+    videoRecording = false;
 }
 
 #endif // APPLE

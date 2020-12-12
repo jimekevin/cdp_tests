@@ -11,7 +11,11 @@
 #include <QtWidgets/QOpenGLWidget>
 
 #include "Pipeline.h"
+#ifdef APPLE
+#include "KinectManager_MacOS.h"
+#else
 #include "KinectManager_Windows.h"
+#endif
 
 #include "filters/ThresholdFilter.h"
 #include "filters/CannyFilter.h"

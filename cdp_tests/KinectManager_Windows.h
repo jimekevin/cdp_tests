@@ -58,9 +58,9 @@ public:
   void writeDepthData(void *dest);
   void writeRgbData(void *dest);
 
-  void saveRGBImage(std::string path);
-  void saveRGBImage(std::string path, unsigned char *input, int width, int height);
-  void startVideoRecording(std::string path);
+  void saveRGBImage(const std::string& path);
+  void saveRGBImage(const std::string& path, unsigned char *input, int width, int height);
+  void startVideoRecording(const std::string& path);
   void stopVideoRecording();
 };
 
