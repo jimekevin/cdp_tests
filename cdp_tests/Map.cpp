@@ -11,16 +11,13 @@
 	{ -(x) + w/2, y + h/2, z, r, g, b }, \
 }
 
-const float vertices[][6][6] = {
-	//MAKE_RECT(0.0f, 0.0f, 0.50f, 4.0f, 4.0f, 0.5f, 0.5f, 0.5f), // Plane
-	//MAKE_RECT(0.0f, 0.0f, 0.4999f, 1.0f, 1.0f, 0.0f, 0.7f, 0.0f), // Building 1
-	//MAKE_RECT(1.0f, 1.0f, 0.4999f, 0.5f, 0.5f, 0.0f, 1.0f, 0.2f), // Building 2
-	MAKE_RECT(0.2f, 0.25f, 0.0f, 1.2f, 0.65f, 0.5f, 0.5f, 0.5f), // Plane
-	MAKE_RECT(-0.0f, 0.2f, -0.0001f, 0.2f, 0.1f, 0.0f, 0.7f, 0.0f), // Building 1
-	MAKE_RECT(-0.3f, 0.3f, -0.0001f, 0.1f, 0.2f, 0.0f, 0.7f, 0.0f), // Building 2
-	MAKE_RECT(0.5f, 0.4f, -0.0001f, 0.1f, 0.15f, 0.0f, 0.7f, 0.0f), // Building 3
-	MAKE_RECT(0.6f, 0.15f, -0.0001f, 0.15f, 0.15f, 0.0f, 0.7f, 0.0f), // Building 4
-};
+//const float vertices[][6][6] = {
+//	MAKE_RECT(0.2f, 0.25f, 0.0f, 1.2f, 0.65f, 0.5f, 0.5f, 0.5f), // Plane
+//	MAKE_RECT(-0.0f, 0.2f, -0.0001f, 0.2f, 0.1f, 0.0f, 0.7f, 0.0f), // Building 1
+//	MAKE_RECT(-0.3f, 0.3f, -0.0001f, 0.1f, 0.2f, 0.0f, 0.7f, 0.0f), // Building 2
+//	MAKE_RECT(0.5f, 0.4f, -0.0001f, 0.1f, 0.15f, 0.0f, 0.7f, 0.0f), // Building 3
+//	MAKE_RECT(0.6f, 0.15f, -0.0001f, 0.15f, 0.15f, 0.0f, 0.7f, 0.0f), // Building 4
+//};
 
 Map::Map() {
 	buildings[0] = Building{ MAKE_RECT(0.2f, 0.25f, 0.0f, 1.2f, 0.65f, 0.5f, 0.5f, 0.5f) }; // Plane
@@ -34,6 +31,23 @@ Map::Map() {
 }
 
 Map::~Map() {
+}
+
+void Map::getXYWH(int id, Map::XYWH *xywh) {
+	xywh->w = buildings[id].tile[0][Building::Index::X] -
+		buildings[id].tile[5][Building::Index::X];
+	xywh->h = buildings[id].tile[0][Building::Index::Y] -
+		buildings[id].tile[5][Building::Index::Y];
+	// Irgendwie so, mal weiter schauen
+	xywh->x = buildings[id].tile[0][Building::Index::X] - (int)(xywh->w / 2);
+	xywh->y = buildings[id].tile[0][Building::Index::X] - (int)(xywh->h / 2);
+}
+
+int Map::buildingsCollideWithPoint(float x, float y) {
+	for (int id = 0; id < countBuildings; id++) {
+		XYWH xywh;
+		getXYWH(id, &xywh);
+	}
 }
 
 void Map::markBuilding(unsigned int id) {
@@ -57,12 +71,9 @@ void Map::unmarkBuilding(unsigned int id) {
 }
 
 const void* Map::data() {
-	//return buildings.data();
-	auto a = &buildings;
-	return a;
+	return &buildings;
 }
 
 const int Map::size() {
 	return countBuildings * sizeof(Map::Building::Tile);
-	return sizeof(vertices);
 }

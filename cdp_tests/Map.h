@@ -10,7 +10,6 @@ class Map
 private:
 	unsigned int countBuildings = 0;
 
-public:
 	struct Building {
 		enum Index {
 			X, Y, Z, R, G, B
@@ -19,8 +18,16 @@ public:
 		Tile tile;
 	} buildings[MAX_BUILDINGS];
 
+	struct XYWH {
+		float x, y, w, h;
+	};
+
+public:
 	Map();
 	~Map();
+
+	void getXYWH(int id, Map::XYWH &xywh);
+	int buildingsCollideWithPoint(float x, float y);
 
 	void markBuilding(unsigned int id);
 	void unmarkBuilding(unsigned int id);

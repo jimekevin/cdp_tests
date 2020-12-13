@@ -7,11 +7,11 @@
 class ContourDetector :
 	public Pipeline::Task
 {
-	std::vector<std::vector<cv::Point>> contours;
-
 public:
 	float threshold1;
 	float threshold2;
+
+	std::vector<std::vector<cv::Point>> contours;
 
 	ContourDetector(float threshold1, float threshold2);
 

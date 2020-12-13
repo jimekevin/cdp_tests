@@ -33,10 +33,10 @@ public:
 	~MainGLWidget();
 
 	// Threshold
-	ThresholdFilter *thresholdFilter = new ThresholdFilter(-10.0f, 10.0f, -10.0f, 10.0f, 0.5f, 3.0f);
+	ThresholdFilter *thresholdFilter;
 
 	// Contour
-	ContourDetector *contourDetector = new ContourDetector(0.8f, 1.0f);
+	ContourDetector *contourDetector;
 
 public slots:
 	void initializeGL();

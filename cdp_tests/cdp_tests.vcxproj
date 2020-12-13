@@ -192,6 +192,7 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="pipeline_tasks\CollisionMapper.cpp" />
     <ClCompile Include="pipeline_tasks\ContourDetector.cpp" />
     <ClCompile Include="KinectManager_Windows.cpp" />
     <ClCompile Include="main.cpp" />
@@ -204,6 +205,7 @@
     <ClCompile Include="pipeline_tasks\ThresholdFilter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="pipeline_tasks\CollisionMapper.h" />
     <ClInclude Include="pipeline_tasks\ContourDetector.h" />
     <ClInclude Include="pipeline_tasks\ThresholdFilter.h" />
     <ClInclude Include="KinectManager_Windows.h" />

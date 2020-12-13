@@ -201,6 +201,10 @@ static const GLfloat map_vertices[][6][6] = {
 MainGLWidget::MainGLWidget(QWidget *parent)
 	: QOpenGLWidget(parent)
 {
+	thresholdFilter = new ThresholdFilter(-10.0f, 10.0f, -10.0f, 10.0f, 0.5f, 3.0f);
+	contourDetector = new ContourDetector(0.8f, 1.0f);
+	collisionDetector = new CollisionDetector(contourDetector);
+
 	// Create pipeline
 	pipeline.addProcessingTask(thresholdFilter);
 	pipeline.addProcessingTask(contourDetector);
@@ -214,6 +218,8 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 
 MainGLWidget::~MainGLWidget()
 {
+	delete thresholdFilter;
+	delete contourDetector;
 }
 
 void MainGLWidget::initializeGL()
