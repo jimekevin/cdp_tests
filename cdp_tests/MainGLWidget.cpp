@@ -10,7 +10,6 @@
 #include <sstream>
 #include <QFileInfo>
 #include "vertex.h"
-#include "filters/ThresholdFilter.h"
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <string.h>
@@ -203,8 +202,8 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 	: QOpenGLWidget(parent)
 {
 	// Create pipeline
-	pipeline.addProcessingFilter(thresholdFilter);
-	pipeline.addProcessingFilter(contourFilter);
+	pipeline.addProcessingTask(thresholdFilter);
+	pipeline.addProcessingTask(contourFilter);
 
 	// Make window activ to recieve key strokes 
 	// and be able to handle them in here

@@ -7,14 +7,22 @@
 
 class Pipeline
 {
-private:
-	std::vector<Filter*> filters;
-
 public:
+	class Task
+	{
+	public:
+		bool enabled = true;
+
+		virtual void apply(cv::Mat& depthMat, cv::Mat& rgbMat) {}
+	};
+
 	void process(cv::Mat& depthMat, cv::Mat& rgbMat);
 
-	size_t addProcessingFilter(Filter *filter);
-	void removeProcessingFilter(size_t index);
+	size_t addProcessingTask(Task *task);
+	void removeProcessingTask(size_t index);
+
+private:
+	std::vector<Task*> tasks;
 };
 
 #endif // PIPELINE_H

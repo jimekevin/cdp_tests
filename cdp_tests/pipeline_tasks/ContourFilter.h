@@ -1,11 +1,11 @@
 #ifndef CANNY_FILTER_H
 #define CANNY_FILTER_H
 
-#include "Filter.h"
+#include "Pipeline.h"
 #include <opencv2/imgproc.hpp>
 
 class ContourFilter :
-	public Filter
+	public Pipeline::Task
 {
 private:
 	float threshold1;

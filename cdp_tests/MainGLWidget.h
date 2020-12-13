@@ -17,8 +17,8 @@
 #include "KinectManager_Windows.h"
 #endif
 #include "Map.h"
-#include "filters/ThresholdFilter.h"
-#include "filters/ContourFilter.h"
+#include "pipeline_tasks/ThresholdFilter.h"
+#include "pipeline_tasks/ContourFilter.h"
 
 class QOpenGLShaderProgram;
 

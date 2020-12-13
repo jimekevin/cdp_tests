@@ -60,19 +60,16 @@
     <ClCompile Include="RecordVideoPushButton.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="Filter.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
-    <ClCompile Include="filters\ThresholdFilter.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="Pipeline.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
     <ClCompile Include="Map.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="filters\ContourFilter.cpp">
+    <ClCompile Include="pipeline_tasks\ContourFilter.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pipeline_tasks\ThresholdFilter.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -83,19 +80,16 @@
     <ClInclude Include="KinectManager_Windows.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Filter.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
-    <ClInclude Include="filters\ThresholdFilter.h">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="Pipeline.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="Map.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="filters\ContourFilter.h">
+    <ClInclude Include="pipeline_tasks\ContourFilter.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pipeline_tasks\ThresholdFilter.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>

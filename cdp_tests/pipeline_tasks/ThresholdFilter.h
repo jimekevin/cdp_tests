@@ -1,10 +1,10 @@
 #ifndef THRESHOLD_FILTER_H
 #define THRESHOLD_FILTER_H
 
-#include "Filter.h"
+#include "Pipeline.h"
 
 class ThresholdFilter :
-	public Filter
+	public Pipeline::Task
 {
 private:
 	float minDist;
