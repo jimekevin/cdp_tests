@@ -69,7 +69,10 @@
     <ClCompile Include="Pipeline.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="filters\CannyFilter.cpp">
+    <ClCompile Include="Map.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="filters\ContourFilter.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,7 +92,10 @@
     <ClInclude Include="Pipeline.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="filters\CannyFilter.h">
+    <ClInclude Include="Map.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="filters\ContourFilter.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>

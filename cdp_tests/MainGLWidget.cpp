@@ -204,7 +204,7 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 {
 	// Create pipeline
 	pipeline.addProcessingFilter(thresholdFilter);
-	pipeline.addProcessingFilter(cannyFilter);
+	pipeline.addProcessingFilter(contourFilter);
 
 	// Make window activ to recieve key strokes 
 	// and be able to handle them in here
@@ -234,7 +234,15 @@ void MainGLWidget::initializeGL()
 	glDepthFunc(GL_LESS);
 
 	//glEnable(GL_DEBUG_OUTPUT);
+	QSurfaceFormat format;
+	format.setMajorVersion(4);
+	format.setMinorVersion(1);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	format.setOption(QSurfaceFormat::DebugContext);
 
+	//QOpenGLContext *ctx = QOpenGLContext::currentContext();
+	auto ctx = (QOpenGLContext*)context();
+	ctx->setFormat(format);
 	logger = new QOpenGLDebugLogger(this);
 	logger->initialize(); // initializes in the current context, i.e. ctx
 
@@ -262,17 +270,6 @@ void MainGLWidget::initializeGL()
 		mapProgram->addShaderFromSourceFile(QOpenGLShader::Vertex, "./shaders/map_view.vert");
 		mapProgram->addShaderFromSourceFile(QOpenGLShader::Fragment, "./shaders/map_view.frag");
 		mapProgram->link();
-
-		mapVAO.create();
-		mapVAO.bind();
-
-		mapBuffer.create();
-		mapBuffer.setUsagePattern(QOpenGLBuffer::StaticDraw);
-		mapBuffer.bind();
-		mapBuffer.allocate(map_vertices, sizeof(map_vertices));
-		mapBuffer.release();
-
-		mapVAO.release();
 		mapProgram->release();
 	}
 
@@ -365,48 +362,65 @@ void MainGLWidget::timerEvent(QTimerEvent *)
 {
 	auto frameResult = KM.AcquireLatestFrame();
 	if (((long)frameResult) >= 0) {
-		kinectProgram->bind();
-
-		if (kinectVAO.isCreated()) {
-			kinectVAO.destroy();
-		}
-		kinectVAO.create();
-		kinectVAO.bind();
-
 		// Get depth + rgb data
 		KM.writeDepthData(depthMat.data);
 		KM.writeRgbData(rgbMat.data);
 
 		// Run pipeline
-		auto t1 = depthMat.type();
-		auto t2 = rgbMat.type();
 		pipeline.process(depthMat, rgbMat);
-		auto t3 = depthMat.type();
-		auto t4 = rgbMat.type();
 
-		// Copy to GPU buffer
-		kinectDepthBuffer.create();
-		kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		kinectDepthBuffer.bind();
-		kinectDepthBuffer.allocate(KM.getDepthSize());
-		auto depthBufferDest = kinectDepthBuffer.mapRange(0, KM.getDepthSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
-		memcpy(depthBufferDest, depthMat.data, KM.getDepthSize());
-		//KM.writeDepthData(depthBufferDest);
-		kinectDepthBuffer.unmap();
-		kinectDepthBuffer.release();
+		// Write kinect frame buffers
+		{
+			kinectProgram->bind();
 
-		kinectRGBBuffer.create();
-		kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
-		kinectRGBBuffer.bind();
-		kinectRGBBuffer.allocate(KM.getRgbSize());
-		auto rgbBufferDest = kinectRGBBuffer.mapRange(0, KM.getRgbSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
-		memcpy(rgbBufferDest, rgbMat.data, KM.getRgbSize());
-		//KM.writeRgbData(rgbBufferDest);
-		kinectRGBBuffer.unmap();
-		kinectRGBBuffer.release();
+			if (kinectVAO.isCreated()) {
+				kinectVAO.destroy();
+			}
+			kinectVAO.create();
+			kinectVAO.bind();
 
-		kinectVAO.release();
-		kinectProgram->release();
+			// Copy to GPU buffer
+			kinectDepthBuffer.create();
+			kinectDepthBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+			kinectDepthBuffer.bind();
+			kinectDepthBuffer.allocate(KM.getDepthSize());
+			auto depthBufferDest = kinectDepthBuffer.mapRange(0, KM.getDepthSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+			memcpy(depthBufferDest, depthMat.data, KM.getDepthSize());
+			//KM.writeDepthData(depthBufferDest);
+			kinectDepthBuffer.unmap();
+			kinectDepthBuffer.release();
+
+			kinectRGBBuffer.create();
+			kinectRGBBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+			kinectRGBBuffer.bind();
+			kinectRGBBuffer.allocate(KM.getRgbSize());
+			auto rgbBufferDest = kinectRGBBuffer.mapRange(0, KM.getRgbSize(), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
+			memcpy(rgbBufferDest, rgbMat.data, KM.getRgbSize());
+			//KM.writeRgbData(rgbBufferDest);
+			kinectRGBBuffer.unmap();
+			kinectRGBBuffer.release();
+
+			kinectVAO.release();
+			kinectProgram->release();
+		}
+
+		// Write map if something changed
+		{
+			if (mapVAO.isCreated()) {
+				mapVAO.destroy();
+			}
+			mapVAO.create();
+			mapVAO.bind();
+
+			mapBuffer.create();
+			mapBuffer.setUsagePattern(QOpenGLBuffer::DynamicDraw);
+			mapBuffer.bind();
+			mapBuffer.allocate(map.data(), map.size());
+			mapBuffer.release();
+
+			mapVAO.release();
+			mapProgram->release();
+		}
 
 		GLenum glErr;
 		while ((glErr = glGetError()) != GL_NO_ERROR)
@@ -489,6 +503,14 @@ void MainGLWidget::keyPressEvent(QKeyEvent *event) {
 
 	case Qt::Key::Key_2:
 		mapDepth += 0.2f;
+		break;
+
+	case Qt::Key::Key_3:
+		map.markBuilding(2);
+		break;
+
+	case Qt::Key::Key_4:
+		map.unmarkBuilding(2);
 		break;
 	}
 	//qDebug() << "press key: " << event->key() << " (" << event->text() << ") ";

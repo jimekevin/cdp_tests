@@ -16,9 +16,9 @@
 #else
 #include "KinectManager_Windows.h"
 #endif
-
+#include "Map.h"
 #include "filters/ThresholdFilter.h"
-#include "filters/CannyFilter.h"
+#include "filters/ContourFilter.h"
 
 class QOpenGLShaderProgram;
 
@@ -37,10 +37,10 @@ public:
 	float maxDistance = 3.0f;
 	ThresholdFilter *thresholdFilter = new ThresholdFilter(minDistance, maxDistance);
 
-	// Canny
-	int cannyThreshold1 = 100;
-	int cannyThreshold2 = 200;
-	CannyFilter *cannyFilter = new CannyFilter(cannyThreshold1, cannyThreshold2);
+	// Contour
+	float contourThreshold1 = 0.8f;
+	float contourThreshold2 = 1.0f;
+	ContourFilter *contourFilter = new ContourFilter(contourThreshold1, contourThreshold2);
 
 public slots:
 	void initializeGL();
@@ -102,6 +102,8 @@ private:
 	int attrLocationVertex;
 	int attrLocationColor;
 
+	Map map;
+
 	QOpenGLDebugLogger *logger;
 
 	QPoint mouseStart = QPoint(0.0, 0.0);
@@ -113,7 +115,7 @@ private:
 	float mouseSpeed = 0.005f;
 	float deltaTime = 1.0f;
 
-	const float CAMERA_SPEED = 0.05;
+	const float CAMERA_SPEED = 0.05f;
 
 	// Kinect timer
 	int kinectTimerId;

@@ -1,24 +1,24 @@
-#include "CannyFilter.h"
+#include "ContourFilter.h"
 
-CannyFilter::CannyFilter(int threshold1, int threshold2)
+ContourFilter::ContourFilter(float threshold1, float threshold2)
 	: threshold1(threshold1), threshold2(threshold2)
 {
 }
 
-const int CannyFilter::getThreshold1() {
+const float ContourFilter::getThreshold1() {
 	return threshold1;
 }
-const int CannyFilter::getThreshold2() {
+const float ContourFilter::getThreshold2() {
 	return threshold2;
 }
-void CannyFilter::updateThreshold1(int threshold1) {
+void ContourFilter::updateThreshold1(float threshold1) {
 	this->threshold1 = threshold1;
 }
-void CannyFilter::updateThreshold2(int threshold2) {
+void ContourFilter::updateThreshold2(float threshold2) {
 	this->threshold2 = threshold2;
 }
 
-void CannyFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
+void ContourFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	int type;
 	cv::Mat image(rgbMat);
 
@@ -30,7 +30,7 @@ void CannyFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 
 	cv::cvtColor(image, image, cv::COLOR_RGB2GRAY);
 	type = image.type();
-	cv::threshold(image, image, 0.8f, 1.0f, cv::THRESH_BINARY);
+	cv::threshold(image, image, threshold1, 1.0f, cv::THRESH_BINARY);
 	type = image.type();
 	image.convertTo(image, CV_8UC1);
 	type = image.type();
@@ -40,7 +40,8 @@ void CannyFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	cv::Mat element = cv::getStructuringElement(cv::MorphShapes::MORPH_RECT, cv::Size(5, 5), cv::Point(-1, -1));
 	cv::morphologyEx(image, image, cv::MorphTypes::MORPH_OPEN, element);
 	cv::morphologyEx(image, image, cv::MorphTypes::MORPH_CLOSE, element);
-	//cv::threshold(image, image, 0.5f, 1.0f, cv::THRESH_BINARY_INV);
+	// no effect for the whole range 0.0f to 1.0f
+	//cv::threshold(image, image, threshold2, 1.0f, cv::THRESH_BINARY_INV);
 
 	//image.convertTo(rgbMat, CV_32FC3); cv::cvtColor(rgbMat, rgbMat, cv::COLOR_GRAY2RGB); return;
 
@@ -94,7 +95,7 @@ void CannyFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	}*/
 }
 
-/*void CannyFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
+/*void ContourFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	cv::Mat grayMat;
 	cv::cvtColor(rgbMat, grayMat, cv::COLOR_RGB2GRAY);
 
@@ -135,7 +136,7 @@ void CannyFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	for (size_t i = 0; i < contours.size(); i++) {
 		cv::convexHull(contours[i], hull[i]);
 	}
-	//cv::Mat rgbMat = cv::Mat::zeros(cannyOut.size(), CV_8UC3);
+	//cv::Mat rgbMat = cv::Mat::zeros(contourOut.size(), CV_8UC3);
 	cv::Scalar redColor = cv::Scalar(1.0f, 0.0f, 0.0f, 1.0f);
 	cv::Scalar blueColor = cv::Scalar(0.0f, 0.0f, 1.0f, 1.0f);
 	for (size_t i = 0; i < contours.size(); i++) {
