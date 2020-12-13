@@ -203,7 +203,7 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 {
 	// Create pipeline
 	pipeline.addProcessingTask(thresholdFilter);
-	pipeline.addProcessingTask(contourFilter);
+	pipeline.addProcessingTask(contourDetector);
 
 	// Make window activ to recieve key strokes 
 	// and be able to handle them in here

@@ -1,24 +1,11 @@
-#include "ContourFilter.h"
+#include "ContourDetector.h"
 
-ContourFilter::ContourFilter(float threshold1, float threshold2)
+ContourDetector::ContourDetector(float threshold1, float threshold2)
 	: threshold1(threshold1), threshold2(threshold2)
 {
 }
 
-const float ContourFilter::getThreshold1() {
-	return threshold1;
-}
-const float ContourFilter::getThreshold2() {
-	return threshold2;
-}
-void ContourFilter::updateThreshold1(float threshold1) {
-	this->threshold1 = threshold1;
-}
-void ContourFilter::updateThreshold2(float threshold2) {
-	this->threshold2 = threshold2;
-}
-
-void ContourFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
+void ContourDetector::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	int type;
 	cv::Mat image(rgbMat);
 
@@ -95,7 +82,7 @@ void ContourFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	}*/
 }
 
-/*void ContourFilter::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
+/*void ContourDetector::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	cv::Mat grayMat;
 	cv::cvtColor(rgbMat, grayMat, cv::COLOR_RGB2GRAY);
 

@@ -18,7 +18,7 @@
 #endif
 #include "Map.h"
 #include "pipeline_tasks/ThresholdFilter.h"
-#include "pipeline_tasks/ContourFilter.h"
+#include "pipeline_tasks/ContourDetector.h"
 
 class QOpenGLShaderProgram;
 
@@ -33,14 +33,10 @@ public:
 	~MainGLWidget();
 
 	// Threshold
-	float minDistance = 0.5f;
-	float maxDistance = 3.0f;
-	ThresholdFilter *thresholdFilter = new ThresholdFilter(minDistance, maxDistance);
+	ThresholdFilter *thresholdFilter = new ThresholdFilter(-10.0f, 10.0f, -10.0f, 10.0f, 0.5f, 3.0f);
 
 	// Contour
-	float contourThreshold1 = 0.8f;
-	float contourThreshold2 = 1.0f;
-	ContourFilter *contourFilter = new ContourFilter(contourThreshold1, contourThreshold2);
+	ContourDetector *contourDetector = new ContourDetector(0.8f, 1.0f);
 
 public slots:
 	void initializeGL();

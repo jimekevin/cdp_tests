@@ -192,7 +192,7 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="pipeline_tasks\ContourFilter.cpp" />
+    <ClCompile Include="pipeline_tasks\ContourDetector.cpp" />
     <ClCompile Include="KinectManager_Windows.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MainWindow.cpp" />
@@ -204,7 +204,7 @@
     <ClCompile Include="pipeline_tasks\ThresholdFilter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pipeline_tasks\ContourFilter.h" />
+    <ClInclude Include="pipeline_tasks\ContourDetector.h" />
     <ClInclude Include="pipeline_tasks\ThresholdFilter.h" />
     <ClInclude Include="KinectManager_Windows.h" />
     <QtMoc Include="MainGLWidget.h" />

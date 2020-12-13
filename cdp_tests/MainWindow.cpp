@@ -24,40 +24,29 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::MainWindow
 	connect(ui->mainGLWidget, SIGNAL(stoppedRecordingVideo()), ui->recordVideoPushButton, SLOT(stopRecordingVideo()));*/
 
 	// Distance threshold sliders
-	connect(ui->minDistanceSlider, &QSlider::valueChanged, [this](int value) {
-		float minDist = value / 100.0f;
-		ui->mainGLWidget->thresholdFilter->updateMinDistance(minDist);
-		std::stringstream ss;
-		ss << "Min distance: " << minDist;
-		ui->minDistanceLabel->setText(QString(ss.str().c_str()));
-	});
-	connect(ui->maxDistanceSlider, &QSlider::valueChanged, [this](int value) {
-		float maxDist = value / 100.0f;
-		ui->mainGLWidget->thresholdFilter->updateMaxDistance(maxDist);
-		std::stringstream ss;
-		ss << "Max distance: " << maxDist;
-		ui->maxDistanceLabel->setText(QString(ss.str().c_str()));
-	});
-	ui->minDistanceSlider->setValue((int)(ui->mainGLWidget->thresholdFilter->getMinDistance() * 100));
-	ui->maxDistanceSlider->setValue((int)(ui->mainGLWidget->thresholdFilter->getMaxDistance() * 100));
+#define MAKE_SLIDER_CONNECTION(VARIABLE, TEXT, SLIDER, TASK, LABEL, SCALE) \
+	connect(ui->SLIDER, &QSlider::valueChanged, [this](int value) {        \
+		float fvalue = value / SCALE;                                      \
+		ui->mainGLWidget->TASK->VARIABLE = fvalue;                         \
+		std::stringstream ss;                                              \
+		ss << TEXT << fvalue;                                              \
+		ui->LABEL->setText(QString(ss.str().c_str()));                     \
+	});                                                                    \
+	ui->SLIDER->setValue((int)(ui->mainGLWidget->TASK->VARIABLE * SCALE))
 
-	// Canny threshold sliders
-	connect(ui->contourThreshold1Slider, &QSlider::valueChanged, [this](int value) {
-		float threshold1 = value / 100.0f;
-		ui->mainGLWidget->contourFilter->updateThreshold1(threshold1);
-		std::stringstream ss;
-		ss << "Contour 1: " << threshold1;
-		ui->contourThreshold1Label->setText(QString(ss.str().c_str()));
-	});
-	connect(ui->contourThreshold2Slider, &QSlider::valueChanged, [this](int value) {
-		float threshold2 = value / 100.0f;
-		ui->mainGLWidget->contourFilter->updateThreshold2(threshold2);
-		std::stringstream ss;
-		ss << "Contour 2: " << threshold2;
-		ui->contourThreshold2Label->setText(QString(ss.str().c_str()));
-	});
-	ui->contourThreshold1Slider->setValue((int)(ui->mainGLWidget->contourFilter->getThreshold1() * 100));
-	ui->contourThreshold2Slider->setValue((int)(ui->mainGLWidget->contourFilter->getThreshold2() * 100));
+	// Threshold
+	MAKE_SLIDER_CONNECTION(minX, "Min X: ", thresholdMinXSlider, thresholdFilter, thresholdMinXLabel, 10.0f);
+	MAKE_SLIDER_CONNECTION(maxX, "Max X: ", thresholdMaxXSlider, thresholdFilter, thresholdMaxXLabel, 10.0f);
+	MAKE_SLIDER_CONNECTION(minY, "Min Y: ", thresholdMinYSlider, thresholdFilter, thresholdMinYLabel, 10.0f);
+	MAKE_SLIDER_CONNECTION(maxY, "Max Y: ", thresholdMaxYSlider, thresholdFilter, thresholdMaxYLabel, 10.0f);
+	MAKE_SLIDER_CONNECTION(minZ, "Min Z: ", thresholdMinZSlider, thresholdFilter, thresholdMinZLabel, 10.0f);
+	MAKE_SLIDER_CONNECTION(maxZ, "Max Z: ", thresholdMaxZSlider, thresholdFilter, thresholdMaxZLabel, 10.0f);
+
+	// Contour
+	MAKE_SLIDER_CONNECTION(threshold1, "Contour 1: ", contourThreshold1Slider, contourDetector, contourThreshold1Label, 100.0f);
+	MAKE_SLIDER_CONNECTION(threshold2, "Contour 2: ", contourThreshold2Slider, contourDetector, contourThreshold2Label, 100.0f);
+
+#undef MAKE_SLIDER_CONNECTION
 }
 
 MainWindow::~MainWindow()

@@ -66,10 +66,10 @@
     <ClCompile Include="Map.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="pipeline_tasks\ContourFilter.cpp">
+    <ClCompile Include="pipeline_tasks\ThresholdFilter.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
-    <ClCompile Include="pipeline_tasks\ThresholdFilter.cpp">
+    <ClCompile Include="pipeline_tasks\ContourDetector.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -86,10 +86,10 @@
     <ClInclude Include="Map.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="pipeline_tasks\ContourFilter.h">
+    <ClInclude Include="pipeline_tasks\ThresholdFilter.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
-    <ClInclude Include="pipeline_tasks\ThresholdFilter.h">
+    <ClInclude Include="pipeline_tasks\ContourDetector.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>

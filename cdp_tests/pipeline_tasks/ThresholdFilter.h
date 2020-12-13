@@ -3,19 +3,23 @@
 
 #include "Pipeline.h"
 
+#include <cmath>
+
 class ThresholdFilter :
 	public Pipeline::Task
 {
-private:
-	float minDist;
-	float maxDist;
-
 public:
-	ThresholdFilter(float minDist, float maxDist);
-	const float getMinDistance();
-	const float getMaxDistance();
-	void updateMinDistance(float minDist);
-	void updateMaxDistance(float maxDist);
+	float minX = std::numeric_limits<double>::infinity();
+	float maxX = std::numeric_limits<double>::infinity();
+	float minY = std::numeric_limits<double>::infinity();
+	float maxY = std::numeric_limits<double>::infinity();
+	float minZ = std::numeric_limits<double>::infinity();
+	float maxZ = std::numeric_limits<double>::infinity();
+	bool drawBorder = true;
+
+	ThresholdFilter(float minX, float maxX, float minY, float maxY, float minZ, float maxZ);
+
+	void updateMinMax(float minX, float maxX, float minY, float maxY, float minZ, float maxZ);
 	void apply(cv::Mat& depthMat, cv::Mat& rgbMat);
 };
 
