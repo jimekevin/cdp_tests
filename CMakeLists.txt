@@ -29,12 +29,14 @@ set(SOURCES
         ${PROJECT_SOURCE_DIR}/cdp_tests/OutputTextBrowser.cpp
         ${PROJECT_SOURCE_DIR}/cdp_tests/Pipeline.cpp
         ${PROJECT_SOURCE_DIR}/cdp_tests/RecordVideoPushButton.cpp
-        ${PROJECT_SOURCE_DIR}/cdp_tests/Filter.cpp
+        ${PROJECT_SOURCE_DIR}/cdp_tests/pipeline_tasks/CollisionMapper.cpp
+        ${PROJECT_SOURCE_DIR}/cdp_tests/pipeline_tasks/ContourDetector.cpp
+        ${PROJECT_SOURCE_DIR}/cdp_tests/pipeline_tasks/ThresholdFilter.cpp
+        ${PROJECT_SOURCE_DIR}/cdp_tests/Map.cpp
+        ${PROJECT_SOURCE_DIR}/cdp_tests/Config.cpp
         ${PROJECT_SOURCE_DIR}/cdp_tests/MainGLWidget.cpp
-        ${PROJECT_SOURCE_DIR}/cdp_tests/filters/CannyFilter.cpp
-        ${PROJECT_SOURCE_DIR}/cdp_tests/filters/ThresholdFilter.cpp
         #${PROJECT_SOURCE_DIR}/cdp_tests/glad/src/glad.c
-        cdp_tests/KinectManager_MacOS.h)
+        )
 
 add_executable(cdp_tests ${SOURCES})
 

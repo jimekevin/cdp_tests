@@ -14,8 +14,8 @@ void CollisionMapper::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	for (const auto &c : cd.contours) {
 		for (const auto &p : c) {
 			// Map has only rectangles (so far)
-			for (map.)
-			if (p.x
+			//for (map.)
+			//if (p.x
 		}
 	}
 

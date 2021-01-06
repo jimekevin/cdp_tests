@@ -14,7 +14,8 @@ private:
 		enum Index {
 			X, Y, Z, R, G, B
 		};
-		typedef typename float Tile[6][6];
+		//typedef typename float Tile[6][6];
+        typedef float Tile[6][6];
 		Tile tile;
 	} buildings[MAX_BUILDINGS];
 
@@ -26,7 +27,7 @@ public:
 	Map();
 	~Map();
 
-	void getXYWH(int id, Map::XYWH &xywh);
+	void getXYWH(int id, Map::XYWH *xywh);
 	int buildingsCollideWithPoint(float x, float y);
 
 	void markBuilding(unsigned int id);

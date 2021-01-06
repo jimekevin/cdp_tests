@@ -12,7 +12,7 @@
 #include "vertex.h"
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
-#include <string.h>
+#include <cstring>
 
 #ifdef APPLE
 #include "KinectManager_MacOS.h"
@@ -203,7 +203,7 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 {
 	thresholdFilter = new ThresholdFilter(-10.0f, 10.0f, -10.0f, 10.0f, 0.5f, 3.0f);
 	contourDetector = new ContourDetector(0.8f, 1.0f);
-	collisionDetector = new CollisionDetector(contourDetector);
+    contourDetector = new ContourDetector(1.0f, 1.0f);
 
 	// Create pipeline
 	pipeline.addProcessingTask(thresholdFilter);
@@ -559,11 +559,11 @@ void MainGLWidget::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void MainGLWidget::wheelEvent(QWheelEvent *event) {
-	int numDegrees = event->delta() / 8;
-	int numSteps = numDegrees / 15;
+	auto numDegrees = event->angleDelta() / 8;
+	auto numSteps = numDegrees / 15;
 
-	if (event->orientation() == Qt::Vertical) {
-		FoV -= 5.0 * numSteps;
+	if (event->angleDelta().x() == 0) {
+		FoV -= 5.0f * numSteps.y();
 
 		updateInfo();
 	}

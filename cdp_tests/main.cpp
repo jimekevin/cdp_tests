@@ -3,6 +3,7 @@
 #include <QtGui/QSurfaceFormat>
 
 #include "MainWindow.h"
+#include "Config.h"
 
 #ifdef APPLE
 #include "KinectManager_MacOS.h"
@@ -24,6 +25,8 @@ int main(int argc, char **argv) {
     format.setOption(QSurfaceFormat::DebugContext);
     QSurfaceFormat::setDefaultFormat(format);
 #endif
+
+    Config::instance().parseSimple("config/default.yaml");
 
     KinectManager::instance().initialize();
 

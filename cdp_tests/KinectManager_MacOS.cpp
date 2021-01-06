@@ -65,8 +65,10 @@ int KinectManager::initialize() {
 }
 
 void KinectManager::terminate() {
-	dev->stop();
-	dev->close();
+    if (dev != nullptr) {
+        dev->stop();
+        dev->close();
+    }
 }
 
 long KinectManager::AcquireLatestFrame() {
@@ -131,7 +133,7 @@ void KinectManager::writeDepthData(void *dest) {
         //*fdest++ = depthFrame->data[4 * i + 2] / 1000.0f;
         auto x = ((float)(i % depthFrame->width) / depthFrame->width * 2.0f) - 1.0f;
         auto y = 1.0f - ((float)((int)(i / depthFrame->width)) / depthFrame->height * 2.0f);
-        auto z = reinterpret_cast<float&>(registered->data[depthFrame->bytes_per_pixel * i]) / 1000.f;
+        auto z = reinterpret_cast<float&>(registered.data[depthFrame->bytes_per_pixel * i]) / 1000.f;
         *fdest++ = x;
         *fdest++ = y;
         *fdest++ = z;

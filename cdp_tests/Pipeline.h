@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <opencv2/imgproc.hpp>
-#include "Filter.h"
 
 class Pipeline
 {
