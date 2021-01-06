@@ -138,7 +138,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>C:\Projects\cdp\Externals\Kinect v2.0\include;GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include\QtGui;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include\QtANGLE;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include\QtCore;debug;C:\VulkanSDK\1.0.51.0\include;..\..\..\PROJECTS\CDP\EXTERNALS\QT\mkspecs\win32-msvc;%(AdditionalIncludeDirectories);$(QTDIR)\include;C:\Projects\cdp\Externals\OpenCV\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Projects\cdp\Externals\Kinect v2.0\include;GeneratedFiles\$(ConfigurationName);GeneratedFiles;.;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include\QtGui;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include\QtANGLE;..\..\..\PROJECTS\CDP\EXTERNALS\QT\include\QtCore;debug;C:\VulkanSDK\1.0.51.0\include;..\..\..\PROJECTS\CDP\EXTERNALS\QT\mkspecs\win32-msvc;%(AdditionalIncludeDirectories);$(QTDIR)\include;C:\Projects\cdp\Externals\OpenCV\include;C:\dev\vcpkg\packages\libfreenect2_x64-windows\include</AdditionalIncludeDirectories>
       <AdditionalOptions>-Zc:rvalueCast -Zc:inline -Zc:strictStrings -Zc:throwingNew -Zc:referenceBinding -Zc:__cplusplus -w34100 -w34189 -w44996 -w44456 -w44457 -w44458 %(AdditionalOptions)</AdditionalOptions>
       <AssemblerListingLocation>debug\</AssemblerListingLocation>
       <BrowseInformation>false</BrowseInformation>
@@ -156,8 +156,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>%(AdditionalIncludeDirectories);Kinect20.lib;opencv_world410d.lib;qtmaind.lib;Qt53DCored.lib;Qt53DAnimationd.lib;Qt53DExtrasd.lib;Qt53DInputd.lib;Qt53DLogicd.lib;Qt53DRenderd.lib;Qt53DQuickd.lib;Qt53DQuickAnimationd.lib;Qt53DQuickExtrasd.lib;Qt53DQuickInputd.lib;Qt53DQuickRenderd.lib;Qt53DQuickScene2Dd.lib;Qt5Concurrentd.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Multimediad.lib;Qt5MultimediaWidgetsd.lib;Qt5Networkd.lib;Qt5OpenGLd.lib;opengl32.lib;glu32.lib;Qt5OpenGLExtensionsd.lib;Qt5Svgd.lib;Qt5UiToolsd.lib;Qt5WebChanneld.lib;Qt5WebSocketsd.lib;Qt5Widgetsd.lib;Qt5Qmld.lib;Qt5QuickWidgetsd.lib;Qt5Quickd.lib;Qt5Locationd.lib;Qt5QuickControls2d.lib;Qt5QuickTestd.lib;Qt5Positioningd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(QTDIR)\lib;$(SolutionDir)..\cdp\Externals\OpenCV\lib;C:\Projects\cdp\Externals\Kinect v2.0\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalIncludeDirectories);Kinect20.lib;opencv_world410d.lib;qtmaind.lib;Qt53DCored.lib;Qt53DAnimationd.lib;Qt53DExtrasd.lib;Qt53DInputd.lib;Qt53DLogicd.lib;Qt53DRenderd.lib;Qt53DQuickd.lib;Qt53DQuickAnimationd.lib;Qt53DQuickExtrasd.lib;Qt53DQuickInputd.lib;Qt53DQuickRenderd.lib;Qt53DQuickScene2Dd.lib;Qt5Concurrentd.lib;Qt5Cored.lib;Qt5Guid.lib;Qt5Multimediad.lib;Qt5MultimediaWidgetsd.lib;Qt5Networkd.lib;Qt5OpenGLd.lib;opengl32.lib;glu32.lib;Qt5OpenGLExtensionsd.lib;Qt5Svgd.lib;Qt5UiToolsd.lib;Qt5WebChanneld.lib;Qt5WebSocketsd.lib;Qt5Widgetsd.lib;Qt5Qmld.lib;Qt5QuickWidgetsd.lib;Qt5Quickd.lib;Qt5Locationd.lib;Qt5QuickControls2d.lib;Qt5QuickTestd.lib;Qt5Positioningd.lib;freenect2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(QTDIR)\lib;$(SolutionDir)..\cdp\Externals\OpenCV\lib;C:\Projects\cdp\Externals\Kinect v2.0\lib;C:\dev\vcpkg\packages\libfreenect2_x64-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>"/MANIFESTDEPENDENCY:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' publicKeyToken='6595b64144ccf1df' language='*' processorArchitecture='*'" %(AdditionalOptions)</AdditionalOptions>
       <DataExecutionPrevention>true</DataExecutionPrevention>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -192,6 +192,7 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="KinectManager_MacOS.cpp" />
     <ClCompile Include="pipeline_tasks\CollisionMapper.cpp" />
     <ClCompile Include="pipeline_tasks\ContourDetector.cpp" />
     <ClCompile Include="KinectManager_Windows.cpp" />
@@ -205,6 +206,7 @@
     <ClCompile Include="pipeline_tasks\ThresholdFilter.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="KinectManager_MacOS.h" />
     <ClInclude Include="pipeline_tasks\CollisionMapper.h" />
     <ClInclude Include="pipeline_tasks\ContourDetector.h" />
     <ClInclude Include="pipeline_tasks\ThresholdFilter.h" />

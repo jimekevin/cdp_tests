@@ -1,3 +1,5 @@
+#ifndef APPLE
+
 #ifndef KINECT_MANAGER_WINDOWS_H
 #define KINECT_MANAGER_WINDOWS_H
 
@@ -65,3 +67,5 @@ public:
 };
 
 #endif // KINECT_MANAGER_WINDOWS_H
+
+#endif

@@ -19,6 +19,7 @@
 #include "Map.h"
 #include "pipeline_tasks/ThresholdFilter.h"
 #include "pipeline_tasks/ContourDetector.h"
+#include "pipeline_tasks/CollisionMapper.h"
 
 class QOpenGLShaderProgram;
 
@@ -32,11 +33,9 @@ public:
 	explicit MainGLWidget(QWidget *parent = 0);
 	~MainGLWidget();
 
-	// Threshold
 	ThresholdFilter *thresholdFilter;
-
-	// Contour
 	ContourDetector *contourDetector;
+	CollisionMapper *collisionMapper;
 
 public slots:
 	void initializeGL();

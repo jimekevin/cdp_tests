@@ -1,3 +1,5 @@
+#ifndef APPLE
+
 #include <Kinect.h>
 #include "KinectManager_Windows.h"
 #include <opencv2/imgproc.hpp>
@@ -186,3 +188,5 @@ void KinectManager::stopVideoRecording() {
 
 	videoRecording = false;
 }
+
+#endif

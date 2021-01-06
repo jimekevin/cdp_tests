@@ -32,7 +32,7 @@ void ContourDetector::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 
 	//image.convertTo(rgbMat, CV_32FC3); cv::cvtColor(rgbMat, rgbMat, cv::COLOR_GRAY2RGB); return;
 
-	std::vector<std::vector<cv::Point>> contours;
+	//std::vector<std::vector<cv::Point>> contours;
 	std::vector<cv::Vec4i> hierarchy;
 	type = image.type();
 	cv::findContours(image, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
@@ -51,17 +51,17 @@ void ContourDetector::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 		cv::Scalar(1.0f, 0.5f, 0.0f, 1.0f),
 		cv::Scalar(1.0f, 0.0f, 0.5f, 1.0f),
 	};
-	std::vector<std::vector<cv::Point>> hull(contours.size());
+	hull.resize(contours.size());
 	for (int i = 0; i < contours.size(); i++) {
 		cv::convexHull(contours[i], hull[i]);
 	}
-	std::vector<double> areas;
+	areas.clear();
 	for (int i = 0; i < contours.size(); i++) {
+		auto area = cv::contourArea(hull[i]);
+		areas.push_back(area);
 		if (contours[i].size() > 50) {
 			continue;
 		}
-		auto area = cv::contourArea(hull[i]);
-		areas.push_back(area);
 		if (area > 1000) {
 			continue;
 		}

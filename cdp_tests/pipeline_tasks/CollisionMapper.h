@@ -9,11 +9,11 @@ class CollisionMapper :
 	public Pipeline::Task
 {
 private:
-	ContourDetector cd;
-	Map map;
+	ContourDetector *cd;
+	Map *map;
 
 public:
-	CollisionMapper(ContourDetector cd, Map map);
+	CollisionMapper(ContourDetector *cd, Map *map);
 
 	void apply(cv::Mat& depthMat, cv::Mat& rgbMat);
 };

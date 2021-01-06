@@ -28,10 +28,11 @@ public:
 	~Map();
 
 	void getXYWH(int id, Map::XYWH *xywh);
-	int buildingsCollideWithPoint(float x, float y);
+	int buildingsCollideWithPoint(float x, float y, std::vector<int> &ids);
 
 	void markBuilding(unsigned int id);
 	void unmarkBuilding(unsigned int id);
+	void unmarkAllBuildings();
 
 	const void* data();
 	const int size();

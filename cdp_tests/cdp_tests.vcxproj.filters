@@ -75,6 +75,9 @@
     <ClCompile Include="pipeline_tasks\CollisionMapper.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
+    <ClCompile Include="KinectManager_MacOS.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vertex.h">
@@ -96,6 +99,9 @@
       <Filter>Generated Files</Filter>
     </ClInclude>
     <ClInclude Include="pipeline_tasks\CollisionMapper.h">
+      <Filter>Generated Files</Filter>
+    </ClInclude>
+    <ClInclude Include="KinectManager_MacOS.h">
       <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>

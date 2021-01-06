@@ -39,19 +39,24 @@ void Map::getXYWH(int id, Map::XYWH *xywh) {
 	xywh->h = buildings[id].tile[0][Building::Index::Y] -
 		buildings[id].tile[5][Building::Index::Y];
 	// Irgendwie so, mal weiter schauen
-	xywh->x = buildings[id].tile[0][Building::Index::X] - (int)(xywh->w / 2);
-	xywh->y = buildings[id].tile[0][Building::Index::X] - (int)(xywh->h / 2);
+	xywh->x = buildings[id].tile[0][Building::Index::X];
+	xywh->y = buildings[id].tile[0][Building::Index::Y];
 }
 
-int Map::buildingsCollideWithPoint(float x, float y) {
-	for (int id = 0; id < countBuildings; id++) {
+int Map::buildingsCollideWithPoint(float x, float y, std::vector<int> &ids) {
+	for (int id = 1; id < countBuildings; id++) {
 		XYWH xywh;
 		getXYWH(id, &xywh);
+
+		if (x < xywh.x || x > xywh.x + xywh.w || y < xywh.y || y > xywh.y + xywh.h) {
+			ids.push_back(id);
+		}
 	}
+	return ids.size();
 }
 
 void Map::markBuilding(unsigned int id) {
-	assert(id < countBuildings);
+	assert(id > 0 && id < countBuildings);
 
 	for (int i = 0; i < 6; i++) {
 		buildings[id].tile[i][Building::Index::R] = 0.0f;
@@ -67,6 +72,12 @@ void Map::unmarkBuilding(unsigned int id) {
 		buildings[id].tile[i][Building::Index::R] = 0.0f;
 		buildings[id].tile[i][Building::Index::G] = 0.7f;
 		buildings[id].tile[i][Building::Index::B] = 0.0f;
+	}
+}
+
+void Map::unmarkAllBuildings() {
+	for (int id = 1; id < countBuildings; id++) {
+		unmarkBuilding(id);
 	}
 }
 

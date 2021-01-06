@@ -203,11 +203,12 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 {
 	thresholdFilter = new ThresholdFilter(-10.0f, 10.0f, -10.0f, 10.0f, 0.5f, 3.0f);
 	contourDetector = new ContourDetector(0.8f, 1.0f);
-    contourDetector = new ContourDetector(1.0f, 1.0f);
+	collisionMapper = new CollisionMapper(contourDetector, &map);
 
 	// Create pipeline
 	pipeline.addProcessingTask(thresholdFilter);
 	pipeline.addProcessingTask(contourDetector);
+	pipeline.addProcessingTask(collisionMapper);
 
 	// Make window activ to recieve key strokes 
 	// and be able to handle them in here
