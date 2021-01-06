@@ -1,0 +1,5 @@
+# 0: kinect camera
+# 1: video file, parameter video_source must be specified
+# 2: Apple uses mode 1 and windows mode 0 if a input file is specified
+video: 2
+video_source: "../data/1607447302.png"
