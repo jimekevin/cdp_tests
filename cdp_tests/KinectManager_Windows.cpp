@@ -9,6 +9,11 @@
 #include <chrono>
 #include <opencv2/imgcodecs.hpp>
 
+int KinectManager::initialize(std::string videoSource) {
+    std::cout << "Test" << std::endl;
+    return 0;
+}
+
 int KinectManager::initialize() {
     if (FAILED(GetDefaultKinectSensor(&sensor)) || !sensor) {
         return S_FALSE;

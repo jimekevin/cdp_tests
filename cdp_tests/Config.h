@@ -2,14 +2,17 @@
 #define CONFIG_H
 
 #include <iostream>
+#include <map>
 
 class Config {
 
 private:
   Config() = default; // Disallow instantiation outside of the class.
 
+  std::map<std::string, std::string> data;
+
 public:
-  Config(const Config&) = delete;
+  Config(const Config&) = default;
   Config& operator=(const Config &) = delete;
   Config(Config &&) = delete;
   Config& operator=(Config &&) = delete;
@@ -19,7 +22,11 @@ public:
       return inst;
   }
 
-  static bool parseSimple(const std::string& path);
+  bool parseSimple(const std::string& path);
+
+  std::string getValue(const std::string& key);
+  int getValueI(const std::string& key);
+  float getValueF(const std::string& key);
 };
 
 #endif // CONFIG_H

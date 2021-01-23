@@ -1,11 +1,5 @@
-#ifndef KINECTMANAGER_MACOS_H
-#define KINECTMANAGER_MACOS_H
-
-#include <libfreenect2/libfreenect2.hpp>
-#include <libfreenect2/frame_listener_impl.h>
-#include <libfreenect2/registration.h>
-#include <libfreenect2/packet_pipeline.h>
-#include <libfreenect2/logger.h>
+#ifndef KINECTMANAGER_RECORDER_H
+#define KINECTMANAGER_RECORDER_H
 
 #include <QtGui/QOpenGLBuffer>
 
@@ -21,23 +15,6 @@ public:
   unsigned char rgbimage[COLORWIDTH * COLORHEIGHT * 4]{};
 
 private:
-  int frameCount = 0;
-  long long lastFrameFetch = 0;
-  bool videoRecording = false;
-
-  libfreenect2::Freenect2 freenect2;
-  libfreenect2::Freenect2Device *dev = nullptr;
-  libfreenect2::PacketPipeline *pipeline = nullptr;
-  libfreenect2::SyncMultiFrameListener *listener = nullptr;
-  libfreenect2::FrameMap frames;
-
-  libfreenect2::Frame *rgbFrame = nullptr;
-  libfreenect2::Frame *irFrame = nullptr;
-  libfreenect2::Frame *depthFrame = nullptr;
-
-  libfreenect2::Frame undistorted = libfreenect2::Frame(WIDTH, HEIGHT, 4);
-  libfreenect2::Frame registered = libfreenect2::Frame(WIDTH, HEIGHT, 4);
-
   std::string serial;
   bool startedStreams = false;
 
@@ -48,7 +25,7 @@ public:
   KinectManager(const KinectManager&) = delete;
   KinectManager& operator=(const KinectManager &) = delete;
   KinectManager(KinectManager &&) = delete;
-  KinectManager & operator=(KinectManager &&) = delete;
+  KinectManager& operator=(KinectManager &&) = delete;
 
   static auto& instance() {
       static KinectManager i;
@@ -74,4 +51,4 @@ public:
   void stopVideoRecording();
 };
 
-#endif // KINECTMANAGER_MACOS_H
+#endif // KINECTMANAGER_RECORDER_H

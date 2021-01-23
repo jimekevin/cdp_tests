@@ -49,6 +49,7 @@ public:
   }
 
   int initialize();
+  int initialize(std::string videoSource);
   void terminate();
   
   long AcquireLatestFrame();

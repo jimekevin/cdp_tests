@@ -20,6 +20,11 @@
 
 // https://openkinect.github.io/libfreenect2/
 
+int KinectManager::initialize(std::string videoSource) {
+    std::cout << "Test" << std::endl;
+    return 0;
+}
+
 int KinectManager::initialize() {
     libfreenect2::setGlobalLogger(libfreenect2::createConsoleLogger(libfreenect2::Logger::Debug));
 

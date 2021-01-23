@@ -26,9 +26,17 @@ int main(int argc, char **argv) {
     QSurfaceFormat::setDefaultFormat(format);
 #endif
 
-    Config::instance().parseSimple("config/default.yaml");
-
-    KinectManager::instance().initialize();
+    auto conf = Config::instance();
+    conf.parseSimple("config/default.yaml");
+    switch (conf.getValueI("video")) {
+        case 0:
+            KinectManager::instance().initialize();
+            break;
+        case 1:
+            auto videoSource = conf.getValue("video_source");
+            KinectManager::instance().initialize(videoSource);
+            break;
+    }
 
 	MainWindow window;
 	window.show();
