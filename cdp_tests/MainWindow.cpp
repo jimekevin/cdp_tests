@@ -1,5 +1,6 @@
 #include <QtWidgets/QWidget>
 //#include <QtGui/QWindow>
+#include <QtCore/QDebug>
 
 #include "MainWindow.h"
 #include "ui_main_window.h"
@@ -19,9 +20,15 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::MainWindow
 	connect(ui->mainGLWidget, SIGNAL(logMessage(std::string)), ui->outputTextBrowser, SLOT(logEntry(std::string)));
 	connect(ui->mainGLWidget, SIGNAL(setOutput(QString)), ui->outputTextBrowser, SLOT(setPlainText(QString)));
 
-	/*connect(ui->recordVideoPushButton, SIGNAL(clicked()), ui->mainGLWidget, SLOT(recordVideo()));
-	connect(ui->mainGLWidget, SIGNAL(startedRecordingVideo()), ui->recordVideoPushButton, SLOT(startRecordingVideo()));
-	connect(ui->mainGLWidget, SIGNAL(stoppedRecordingVideo()), ui->recordVideoPushButton, SLOT(stopRecordingVideo()));*/
+	connect(ui->recordVideoPushButton, SIGNAL(clicked()), ui->mainGLWidget, SLOT(recordVideo()));
+	//connect(ui->mainGLWidget, SIGNAL(startedRecordingVideo()), ui->recordVideoPushButton, SLOT(startRecordingVideo()));
+	//connect(ui->mainGLWidget, SIGNAL(stoppedRecordingVideo()), ui->recordVideoPushButton, SLOT(stopRecordingVideo()));
+	connect(ui->mainGLWidget, &MainGLWidget::startedRecordingVideo, [this]() {
+		ui->recordVideoPushButton->setText("Stop Recording");
+	});
+	connect(ui->mainGLWidget, &MainGLWidget::stoppedRecordingVideo, [this]() {
+		ui->recordVideoPushButton->setText("Start Recording");
+	});
 
 	// Distance threshold sliders
 #define MAKE_SLIDER_CONNECTION(VARIABLE, TEXT, SLIDER, TASK, LABEL, SCALE) \

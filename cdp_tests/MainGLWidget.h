@@ -80,6 +80,11 @@ private:
 	QOpenGLBuffer mapBuffer;
 	float mapDepth = 2.4f;
 
+	bool videoRecording = false;
+	int videoRecordingCount = 0;
+	std::string videoRecordingPath;
+	void captureFrame();
+
 	//QVector3D position = QVector3D(0.381632, 0.809913, -1.56082);
 	//QVector3D direction = QVector3D(-0.116402, -0.159318, 0.980341);
 	//QVector3D right = QVector3D(-0.993118, 0, -0.117117);

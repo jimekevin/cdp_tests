@@ -3,6 +3,7 @@
 #include <QtCore/QString>
 #include <QtGui/QOpenGLShaderProgram>
 #include <QtMath>
+#include <QThread>
 #include <QOpenGLExtraFunctions>
 #include <QtGlobal>
 #include <QOpenGLDebugLogger>
@@ -13,6 +14,13 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include <cstring>
+#include <fstream>
+#include <filesystem>
+#include <string>
+//#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
+#include <boost/iostreams/copy.hpp>
 
 #ifdef APPLE
 #include "KinectManager_MacOS.h"
@@ -372,6 +380,9 @@ void MainGLWidget::timerEvent(QTimerEvent *)
 		KM.writeDepthData(depthMat.data);
 		KM.writeRgbData(rgbMat.data);
 
+		if (videoRecording) {
+			captureFrame();
+		}
 		// Run pipeline
 		pipeline.process(depthMat, rgbMat);
 
@@ -442,6 +453,50 @@ void MainGLWidget::timerEvent(QTimerEvent *)
 	KM.ReleaseLatestFrame();
 }
 
+void MainGLWidget::captureFrame() {
+	if (videoRecordingCount >= KM.frameCount) {
+		return;
+	}
+	auto rawSize = (
+		(KM.WIDTH * KM.HEIGHT * sizeof(ColorSpacePoint)) +
+		(KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint)) +
+		(KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char))
+	);
+	//std::streambuf compressed();
+	boost::iostreams::filtering_stream<boost::iostreams::input> in; // (compressed);
+	in.push(boost::iostreams::gzip_compressor());
+	//in.write(reinterpret_cast<const char*>(KM.depth2rgb), KM.WIDTH * KM.HEIGHT * sizeof(ColorSpacePoint));
+	//in.write(reinterpret_cast<const char*>(KM.depth2xyz), KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint));
+	//in.write(reinterpret_cast<const char*>(KM.rgbimage),  KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char));
+	//in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.depth2rgb), KM.WIDTH * KM.HEIGHT * sizeof(ColorSpacePoint)));
+	//in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.depth2xyz), KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint)));
+	//in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.rgbimage), KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char)));
+	in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.depth2rgb), rawSize));
+	std::stringstream compressed(std::stringstream::in | std::stringstream::out | std::stringstream::binary);
+	auto compressedSize = boost::iostreams::copy(in, compressed);
+	
+	std::ofstream ofs(videoRecordingPath, std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+	std::stringstream headerInformation;
+	headerInformation << "START" << compressedSize << "END";
+	ofs << headerInformation.str();
+	ofs << compressed.rdbuf();
+	//ofs.write(in.beg, in.end - in.beg);
+
+	//boost::iostreams::filtering_ostream out;
+	//out.push(ofs);
+	//out.write("CDPKEVINBEIN", 12);
+	//out.write(reinterpret_cast<const char*>(KM.depth2rgb), KM.WIDTH * KM.HEIGHT * sizeof(ColorSpacePoint));
+	//out.write(reinterpret_cast<const char*>(KM.depth2xyz), KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint));
+	//out.write(reinterpret_cast<const char*>(KM.rgbimage),  KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char));
+
+	videoRecordingCount = KM.frameCount;
+
+	//boost::iostreams::close(out);
+	ofs.close();
+
+	//qDebug() << "Saved video frame " << videoRecordingCount;
+}
+
 void MainGLWidget::keyPressEvent(QKeyEvent *event) {
 	switch (event->key()) {
 	case Qt::Key::Key_Up:
@@ -478,7 +533,8 @@ void MainGLWidget::keyPressEvent(QKeyEvent *event) {
 	{
 		std::time_t result = std::time(nullptr);
 		std::stringstream path;
-		path << "C:\\Users\\Kevin Bein\\Downloads\\" << result << ".png";
+		//path << "C:\\Users\\Kevin Bein\\Downloads\\" << result << ".png";
+		path << "C:\\Projects\\cdp_tests\\data" << result << ".png";
 		if (event->key() == Qt::Key::Key_Z) {
 			KM.saveRGBImage(path.str());
 		}
@@ -633,10 +689,20 @@ void MainGLWidget::printVersionInformation()
 }
 
 void MainGLWidget::recordVideo() {
-	//if (!KM.startVideoRecording()) {
-	//	return;
-	//}
+	if (!videoRecording) {
+		videoRecording = true;
 
-	emit startedRecordingVideo();
-	//emit stoppedRecordingVideo();
+		std::time_t result = std::time(nullptr);
+		std::stringstream path;
+		path << "C:\\Projects\\cdp_tests\\data\\" << result << ".dat";
+		videoRecordingPath = path.str();
+
+		emit startedRecordingVideo();
+		qDebug() << "Stopped video recording";
+	}
+	else {
+		videoRecording = false;
+		emit stoppedRecordingVideo();
+		qDebug() << "Stopped video recording ";
+	}
 }

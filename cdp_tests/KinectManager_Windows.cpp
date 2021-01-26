@@ -2,17 +2,20 @@
 
 #include <Kinect.h>
 #include "KinectManager_Windows.h"
+#include "InputRecorder.h"
 #include <opencv2/imgproc.hpp>
 #include <QtGui/QOpenGLBuffer>
+#include <QtCore/QDebug>
 #include <iostream>
 #include <fstream>
 #include <chrono>
 #include <opencv2/imgcodecs.hpp>
 
-int KinectManager::initialize(std::string videoSource) {
-    std::cout << "Test" << std::endl;
-    return 0;
-}
+#include <filesystem>
+#include <string>
+//#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 int KinectManager::initialize() {
     if (FAILED(GetDefaultKinectSensor(&sensor)) || !sensor) {
@@ -26,33 +29,86 @@ int KinectManager::initialize() {
             &reader
     );
 
+	loadedKinect = LoadingStatus::KINECT;
     return S_OK;
 }
 
+int KinectManager::initializeFromFile(std::string path) {
+	if (FAILED(GetDefaultKinectSensor(&sensor)) || !sensor) {
+		return S_FALSE;
+	}
+
+	sensor->get_CoordinateMapper(&mapper);
+	reader = new InputRecorder(path);
+
+	loadedKinect = LoadingStatus::FILE;
+	return S_OK;
+}
+
 void KinectManager::terminate() {
-	sensor->Close();
+	if (loadedKinect == LoadingStatus::KINECT) {
+		sensor->Close();
+	}
+	else if (loadedKinect == LoadingStatus::FILE) {
+		delete reader;
+	}
+	loadedKinect = LoadingStatus::UNLOADED;
 }
 
 long KinectManager::AcquireLatestFrame() {
-	auto result = reader->AcquireLatestFrame(&lastFrame);
-	if (result) {
-		frameCount++;
+	assert(loadedKinect);
+
+	//PointF *tableEntries;
+	//UINT32 tableEntryCount;
+	//auto a1 = mapper->GetDepthFrameToCameraSpaceTable(&tableEntryCount, &tableEntries);
+	//CameraIntrinsics intrinsics;
+	//auto a2 = mapper->GetDepthCameraIntrinsics(&intrinsics);
+	//sensor;
+
+	HRESULT result;
+
+	if (loadedKinect == LoadingStatus::KINECT) {
+		result = reader->AcquireLatestFrame(&lastFrame);
+		if (result == S_OK) {
+			frameCount++;
+			//qDebug() << "Frame count is now " << frameCount;
+		}
 	}
+
+	else if (loadedKinect == LoadingStatus::FILE) {
+		result = reader->AcquireLatestFrame(&lastFrame);
+		if (result == S_OK) {
+			frameCount++;
+			//qDebug() << "Frame count is now " << frameCount;
+		}
+	}
+
+	if (result != S_OK) {
+		return -1;
+	}
+
 	return result;
 }
 
 void KinectManager::ReleaseLatestFrame() {
+	assert(loadedKinect);
 }
 
 const int KinectManager::getDepthSize() {
+	assert(loadedKinect);
+
 	return WIDTH * HEIGHT * 3 * sizeof(float);
 }
 
 const int KinectManager::getRgbSize() {
+	assert(loadedKinect);
+
 	return WIDTH * HEIGHT * 3 * sizeof(float);
 }
 
 void KinectManager::writeDepthData(void *dest) {
+	assert(loadedKinect);
+
 	if (dest == NULL) {
 		return;
 	}
@@ -70,20 +126,21 @@ void KinectManager::writeDepthData(void *dest) {
         return;
     }
 
+	currentDepthBuf = nullptr;
+
     // Get data from frame
     unsigned int sz;
-    unsigned short* buf;
     HRESULT result;
-    result = depthframe->AccessUnderlyingBuffer(&sz, &buf);
+	if (loadedKinect == LoadingStatus::KINECT) {
+		result = depthframe->AccessUnderlyingBuffer(&sz, &currentDepthBuf);
+		result = mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, currentDepthBuf, WIDTH * HEIGHT, depth2xyz);
+	}
+	else {
+		auto df = dynamic_cast<InputRecorder::DepthFrame*>(depthframe);
+		result = df->copyDepthData(sizeof(depth2rgb), reinterpret_cast<BYTE*>(depth2rgb), sizeof(depth2xyz), reinterpret_cast<BYTE*>(depth2xyz));
+		sz = WIDTH * HEIGHT;
+	}
 
-    /*glBuffer->allocate(sz * 3 * sizeof(float));
-    glBuffer->bind();
-    auto dest = glBuffer->mapRange(0, sz * 3 * sizeof(float), QOpenGLBuffer::RangeInvalidateBuffer | QOpenGLBuffer::RangeWrite);
-    if (dest == NULL) {
-        return;
-    }*/
-
-    result = mapper->MapDepthFrameToCameraSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2xyz);
     float* fdest = (float*)dest;
     for (unsigned int i = 0; i < sz; i++) {
         *fdest++ = depth2xyz[i].X;
@@ -91,7 +148,9 @@ void KinectManager::writeDepthData(void *dest) {
         *fdest++ = depth2xyz[i].Z;
     }
 
-    mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, buf, WIDTH * HEIGHT, depth2rgb);
+	if (loadedKinect == LoadingStatus::KINECT) {
+		mapper->MapDepthFrameToColorSpace(WIDTH * HEIGHT, currentDepthBuf, WIDTH * HEIGHT, depth2rgb);
+	}
 
     //glBuffer->unmap();	
 	
@@ -101,6 +160,8 @@ void KinectManager::writeDepthData(void *dest) {
 }
 
 void KinectManager::writeRgbData(void *dest) {
+	assert(loadedKinect);
+
 	if (dest == NULL) {
 		return;
 	}
@@ -152,46 +213,20 @@ void KinectManager::writeRgbData(void *dest) {
 }
 
 void KinectManager::saveRGBImage(const std::string& path) {
+	assert(loadedKinect);
+
 	saveRGBImage(path, rgbimage, COLORWIDTH, COLORHEIGHT);
 }
 
 void KinectManager::saveRGBImage(const std::string& path, unsigned char *input, int width, int height) {
+	assert(loadedKinect);
+
     cv::Mat frameRGB(height, width, CV_8UC4, input);
     cv::Mat frameBGRA(height, width, CV_8UC4);
     cv::cvtColor(frameRGB, frameBGRA, cv::COLOR_RGBA2BGRA);
     cv::Mat flippedFrame;
     cv::flip(frameBGRA, flippedFrame, 1);
     cv::imwrite(path, flippedFrame);
-}
-
-void KinectManager::startVideoRecording(const std::string& path) {
-	if (videoRecording) {
-		return;
-	}
-
-	// Thread dispatch
-
-	std::ofstream ofs(path, std::ofstream::out | std::ofstream::trunc);
-	int count = 0;
-	while (videoRecording) {
-		if (count >= frameCount) {
-			continue;
-		}
-
-		ofs.write((char*)depth2xyz, WIDTH * HEIGHT * 4);
-		ofs.write((char*)rgbimage, COLORWIDTH * COLORHEIGHT * 4);
-		std::cout << "Wrote frame " << frameCount << std::endl;
-		count++;
-	}
-	ofs.close();
-}
-
-void KinectManager::stopVideoRecording() {
-	if (!videoRecording) {
-		return;
-	}
-
-	videoRecording = false;
 }
 
 #endif

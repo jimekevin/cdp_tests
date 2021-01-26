@@ -12,6 +12,7 @@ void ContourDetector::apply(cv::Mat& depthMat, cv::Mat& rgbMat) {
 	cv::Mat mask;
 	cv::inRange(image, cv::Scalar(0.0f, 0.0f, 0.0f), cv::Scalar(0.0f, 0.0f, 0.0f), mask);
 	image.setTo(cv::Scalar(1.0f, 1.0f, 1.0f), mask);
+	mask.release();
 
 	//image.convertTo(rgbMat, CV_32FC3); cv::cvtColor(rgbMat, rgbMat, cv::COLOR_GRAY2RGB); return;
 

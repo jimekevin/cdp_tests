@@ -1,6 +1,8 @@
 #include "Config.h"
 
 #include <fstream>
+#include <cstring>
+#include <string>
 
 bool Config::parseSimple(const std::string& path) {
     std::ifstream conf(path);
@@ -19,6 +21,10 @@ bool Config::parseSimple(const std::string& path) {
             continue;
         }
 
+		if (key[0] == '#') {
+			continue;
+		}
+
         data[key] = value;
 
         std::cout << "Config: " << key << " -> " << value << "\n";
@@ -32,15 +38,23 @@ bool Config::parseSimple(const std::string& path) {
 
 std::string Config::getValue(const std::string& key) {
     if (data.find(key) != data.end()) {
-        return data[key];
+		auto value = data[key];
+		value = std::string(value.substr(1, value.length() - 2));
+		return value;
     }
     return "";
 }
 
 int Config::getValueI(const std::string& key) {
-    return std::stoi(getValue(key));
+	if (data.find(key) != data.end()) {
+		return std::stoi(data[key]);
+	}
+	return 0;
 }
 
 float Config::getValueF(const std::string& key) {
-    return std::stof(getValue(key));
+	if (data.find(key) != data.end()) {
+		return std::stof(data[key]);
+	}
+	return INFINITY;
 }

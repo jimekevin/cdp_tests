@@ -227,6 +227,11 @@ void KinectManager::stopVideoRecording() {
     videoRecording = false;
 }
 
+int KinectManager::loadVideo(std::string videoSource) {
+	std::cout << "Not implemented" << std::endl;
+	return 0;
+}
+
 #endif // APPLE
 
 #endif // KINECT_MANAGER_H

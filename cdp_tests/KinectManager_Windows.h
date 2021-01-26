@@ -6,6 +6,9 @@
 #include <Kinect.h>
 #include <opencv2/imgproc.hpp>
 #include <QtGui/QOpenGLBuffer>
+#include <thread>
+#include <fstream>
+#include <boost/iostreams/filtering_stream.hpp>
 
 class KinectManager {
 public:
@@ -15,13 +18,20 @@ public:
   const static int COLORWIDTH = 1920;
   const static int COLORHEIGHT = 1080;
 
-  IMultiSourceFrameReader* reader;
+  IMultiSourceFrameReader* reader = nullptr;
 
+  UINT16* currentDepthBuf = nullptr; 
+  // 3 BELOW MUST NOT BE REORDERED!
   ColorSpacePoint depth2rgb[WIDTH * HEIGHT];  // Maps depth pixels to rgb pixels
   CameraSpacePoint depth2xyz[WIDTH * HEIGHT];
   unsigned char rgbimage[COLORWIDTH * COLORHEIGHT * 4]; // RGBA 0-255
 
+  int frameCount = 0; 
+
 private:
+  enum LoadingStatus { UNLOADED, KINECT, FILE };
+  LoadingStatus loadedKinect = UNLOADED;
+
   KinectManager() {} // Disallow instantiation outside of the class.
 
   IKinectSensor *sensor;
@@ -29,9 +39,6 @@ private:
 
   IColorFrameReader *colorFrameReader;
   IDepthFrameReader *depthFrameReader;
-
-  int frameCount = 0;
-  long long lastFrameFetch = 0;
 
   IMultiSourceFrame *lastFrame = nullptr;
 
@@ -49,7 +56,7 @@ public:
   }
 
   int initialize();
-  int initialize(std::string videoSource);
+  int initializeFromFile(std::string path);
   void terminate();
   
   long AcquireLatestFrame();
@@ -63,8 +70,6 @@ public:
 
   void saveRGBImage(const std::string& path);
   void saveRGBImage(const std::string& path, unsigned char *input, int width, int height);
-  void startVideoRecording(const std::string& path);
-  void stopVideoRecording();
 };
 
 #endif // KINECT_MANAGER_WINDOWS_H

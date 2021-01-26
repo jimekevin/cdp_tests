@@ -72,6 +72,7 @@ public:
   void saveRGBImage(const std::string& path, unsigned char *input, int width, int height);
   void startVideoRecording(const std::string& path);
   void stopVideoRecording();
+  int loadVideo(std::string videoSource);
 };
 
 #endif // KINECTMANAGER_MACOS_H
