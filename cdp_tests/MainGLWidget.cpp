@@ -15,12 +15,17 @@
 #include <opencv2/highgui.hpp>
 #include <cstring>
 #include <fstream>
+#include <iostream>
 #include <filesystem>
 #include <string>
+#include <iomanip>
+#include "Config.h"
 //#include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/iostreams/copy.hpp>
+
+#define CONFIG_DEFAULT_PATH "config/default.yaml"
 
 #ifdef APPLE
 #include "KinectManager_MacOS.h"
@@ -223,6 +228,36 @@ MainGLWidget::MainGLWidget(QWidget *parent)
 	setFocus();
 
 	updateInfo();
+}
+
+void MainGLWidget::showEvent(QShowEvent *event) {
+	if (KM.loadedKinect != KM.KINECT) {
+		emit hideRecordVideoButton();
+	}
+
+	// Load settings
+
+	auto conf = Config::instance();
+	conf.parseSimple(CONFIG_DEFAULT_PATH);
+	auto taskThresholdsMinX = conf.getValueF("task_thresholds_minX");
+	auto taskThresholdsMaxX = conf.getValueF("task_thresholds_maxX");
+	auto taskThresholdsMinY  = conf.getValueF("task_thresholds_minY");
+	auto taskThresholdsMaxY = conf.getValueF("task_thresholds_maxY");
+	auto taskThresholdsMinZ = conf.getValueF("task_thresholds_minZ");
+	auto taskThresholdsMaxZ = conf.getValueF("task_thresholds_maxZ");
+	auto taskCountourDetectorThreshold1 = conf.getValueF("task_countour_detector_threshold1");
+	auto taskCountourDetectorThreshold2 = conf.getValueF("task_countour_detector_threshold2");
+
+	thresholdFilter->minX = taskThresholdsMinX != INFINITY ? taskThresholdsMinX : thresholdFilter->minX;
+	thresholdFilter->maxX = taskThresholdsMaxX != INFINITY ? taskThresholdsMaxX : thresholdFilter->maxX;
+	thresholdFilter->minY = taskThresholdsMinY != INFINITY ? taskThresholdsMinY : thresholdFilter->minY;
+	thresholdFilter->maxY = taskThresholdsMaxY != INFINITY ? taskThresholdsMaxY : thresholdFilter->maxY;
+	thresholdFilter->minZ = taskThresholdsMinZ != INFINITY ? taskThresholdsMinZ : thresholdFilter->minZ;
+	thresholdFilter->maxZ = taskThresholdsMaxZ != INFINITY ? taskThresholdsMaxZ : thresholdFilter->maxZ;
+	contourDetector->threshold1 = taskCountourDetectorThreshold1 != INFINITY ? taskCountourDetectorThreshold1 : contourDetector->threshold1;
+	contourDetector->threshold2 = taskCountourDetectorThreshold2 != INFINITY ? taskCountourDetectorThreshold2 : contourDetector->threshold2;
+
+	emit sliderValuesChanged();
 }
 
 MainGLWidget::~MainGLWidget()
@@ -457,29 +492,38 @@ void MainGLWidget::captureFrame() {
 	if (videoRecordingCount >= KM.frameCount) {
 		return;
 	}
+
 	auto rawSize = (
 		(KM.WIDTH * KM.HEIGHT * sizeof(ColorSpacePoint)) +
 		(KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint)) +
 		(KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char))
 	);
-	//std::streambuf compressed();
-	boost::iostreams::filtering_stream<boost::iostreams::input> in; // (compressed);
-	in.push(boost::iostreams::gzip_compressor());
+	std::ofstream ofs(videoRecordingPath, std::ofstream::out | std::ofstream::binary | std::ofstream::app);
+	std::stringstream headerInformation;
+	if (videoRecordingUseCompression) {
+		boost::iostreams::filtering_stream<boost::iostreams::input> in; // (compressed);
+		in.push(boost::iostreams::gzip_compressor());
+		in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.depth2rgb), rawSize));
+		std::stringstream compressed(std::stringstream::in | std::stringstream::out | std::stringstream::binary);
+		auto size = boost::iostreams::copy(in, compressed);
+		headerInformation << "SC" << std::setw(17) << size << "E";
+		ofs << headerInformation.str();
+		ofs << compressed.rdbuf();
+	}
+	else {
+		headerInformation << "S " << std::setw(17) << rawSize << "E";
+		ofs << headerInformation.str();
+		ofs.write(reinterpret_cast<const char*>(KM.depth2rgb), rawSize);
+	}
+	ofs.close();
+	videoRecordingCount = KM.frameCount;
+
 	//in.write(reinterpret_cast<const char*>(KM.depth2rgb), KM.WIDTH * KM.HEIGHT * sizeof(ColorSpacePoint));
 	//in.write(reinterpret_cast<const char*>(KM.depth2xyz), KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint));
 	//in.write(reinterpret_cast<const char*>(KM.rgbimage),  KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char));
 	//in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.depth2rgb), KM.WIDTH * KM.HEIGHT * sizeof(ColorSpacePoint)));
 	//in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.depth2xyz), KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint)));
 	//in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.rgbimage), KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char)));
-	in.push(boost::iostreams::array_source(reinterpret_cast<const char*>(KM.depth2rgb), rawSize));
-	std::stringstream compressed(std::stringstream::in | std::stringstream::out | std::stringstream::binary);
-	auto compressedSize = boost::iostreams::copy(in, compressed);
-	
-	std::ofstream ofs(videoRecordingPath, std::ofstream::out | std::ofstream::binary | std::ofstream::app);
-	std::stringstream headerInformation;
-	headerInformation << "START" << compressedSize << "END";
-	ofs << headerInformation.str();
-	ofs << compressed.rdbuf();
 	//ofs.write(in.beg, in.end - in.beg);
 
 	//boost::iostreams::filtering_ostream out;
@@ -489,10 +533,8 @@ void MainGLWidget::captureFrame() {
 	//out.write(reinterpret_cast<const char*>(KM.depth2xyz), KM.WIDTH * KM.HEIGHT * sizeof(CameraSpacePoint));
 	//out.write(reinterpret_cast<const char*>(KM.rgbimage),  KM.COLORWIDTH * KM.COLORHEIGHT * 4 * sizeof(unsigned char));
 
-	videoRecordingCount = KM.frameCount;
 
 	//boost::iostreams::close(out);
-	ofs.close();
 
 	//qDebug() << "Saved video frame " << videoRecordingCount;
 }
@@ -688,13 +730,16 @@ void MainGLWidget::printVersionInformation()
 	qDebug() << qPrintable(glType) << qPrintable(glVersion) << "(" << qPrintable(glProfile) << ")";
 }
 
+void MainGLWidget::test() {
+}
+
 void MainGLWidget::recordVideo() {
 	if (!videoRecording) {
 		videoRecording = true;
 
 		std::time_t result = std::time(nullptr);
 		std::stringstream path;
-		path << "C:\\Projects\\cdp_tests\\data\\" << result << ".dat";
+		path << "C:\\Projects\\cdp_tests\\data\\" << result << (videoRecordingUseCompression ? "_c" : "_u");
 		videoRecordingPath = path.str();
 
 		emit startedRecordingVideo();
@@ -705,4 +750,22 @@ void MainGLWidget::recordVideo() {
 		emit stoppedRecordingVideo();
 		qDebug() << "Stopped video recording ";
 	}
+}
+
+void MainGLWidget::enableVideoRecordingCompression(int state) {
+	videoRecordingUseCompression = state == Qt::CheckState::Checked;
+}
+
+void MainGLWidget::exportSettings() {
+	std::cout << std::fixed << std::showpoint << std::setprecision(1)
+		      << "\n"
+	          << "task_thresholds_minX: " << thresholdFilter->minX << "f\n"
+	          << "task_thresholds_maxX: " << thresholdFilter->maxX << "f\n"
+	          << "task_thresholds_minY: " << thresholdFilter->minY << "f\n"
+	          << "task_thresholds_maxY: " << thresholdFilter->maxY << "f\n"
+	          << "task_thresholds_minZ: " << thresholdFilter->minZ << "f\n"
+	          << "task_thresholds_maxZ: " << thresholdFilter->maxZ << "f\n"
+	          << "task_countour_detector_threshold1: " << contourDetector->threshold1 << "f\n"
+	          << "task_countour_detector_threshold2: " << contourDetector->threshold2 << "f\n"
+	          << "\n";
 }

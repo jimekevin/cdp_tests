@@ -19,6 +19,9 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::MainWindow
 
 	connect(ui->mainGLWidget, SIGNAL(logMessage(std::string)), ui->outputTextBrowser, SLOT(logEntry(std::string)));
 	connect(ui->mainGLWidget, SIGNAL(setOutput(QString)), ui->outputTextBrowser, SLOT(setPlainText(QString)));
+	connect(ui->mainGLWidget, &MainGLWidget::hideRecordVideoButton, [this]() {
+		ui->recordVideoPushButton->setDisabled(true);
+	});
 
 	connect(ui->recordVideoPushButton, SIGNAL(clicked()), ui->mainGLWidget, SLOT(recordVideo()));
 	//connect(ui->mainGLWidget, SIGNAL(startedRecordingVideo()), ui->recordVideoPushButton, SLOT(startRecordingVideo()));
@@ -29,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::MainWindow
 	connect(ui->mainGLWidget, &MainGLWidget::stoppedRecordingVideo, [this]() {
 		ui->recordVideoPushButton->setText("Start Recording");
 	});
+	connect(ui->compressVideoRecordingCheckbox, SIGNAL(stateChanged(int)), ui->mainGLWidget, SLOT(enableVideoRecordingCompression(int)));
 
 	// Distance threshold sliders
 #define MAKE_SLIDER_CONNECTION(VARIABLE, TEXT, SLIDER, TASK, LABEL, SCALE) \
@@ -53,7 +57,21 @@ MainWindow::MainWindow(QWidget *parent) : QWidget(parent), ui(new Ui::MainWindow
 	MAKE_SLIDER_CONNECTION(threshold1, "Contour 1: ", contourThreshold1Slider, contourDetector, contourThreshold1Label, 100.0f);
 	MAKE_SLIDER_CONNECTION(threshold2, "Contour 2: ", contourThreshold2Slider, contourDetector, contourThreshold2Label, 100.0f);
 
+	connect(ui->mainGLWidget, &MainGLWidget::sliderValuesChanged, [this]() {
+		ui->thresholdMinXSlider->setValue(ui->mainGLWidget->thresholdFilter->minX * 10.0f);
+		ui->thresholdMaxXSlider->setValue(ui->mainGLWidget->thresholdFilter->maxX * 10.0f);
+		ui->thresholdMinYSlider->setValue(ui->mainGLWidget->thresholdFilter->minY * 10.0f);
+		ui->thresholdMaxYSlider->setValue(ui->mainGLWidget->thresholdFilter->maxY * 10.0f);
+		ui->thresholdMinZSlider->setValue(ui->mainGLWidget->thresholdFilter->minZ * 10.0f);
+		ui->thresholdMaxZSlider->setValue(ui->mainGLWidget->thresholdFilter->maxZ * 10.0f);
+		ui->contourThreshold1Slider->setValue(ui->mainGLWidget->contourDetector->threshold1 * 100.0f);
+		ui->contourThreshold2Slider->setValue(ui->mainGLWidget->contourDetector->threshold2 * 100.0f);
+	});
+
 #undef MAKE_SLIDER_CONNECTION
+
+	// Export settings
+	connect(ui->exportSettingsButton, SIGNAL(clicked()), ui->mainGLWidget, SLOT(exportSettings()));
 }
 
 MainWindow::~MainWindow()

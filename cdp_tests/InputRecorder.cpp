@@ -1,6 +1,7 @@
 #include "InputRecorder.h"
 
-#include <ctime>
+#include <QtCore/QtDebug>
+#include <chrono>
 
 InputRecorder::ColorFrame::ColorFrame(char *rgbimage, RecorderInfo &recInfo)
 	: rgbimage(rgbimage), recInfo(recInfo)
@@ -87,18 +88,18 @@ HRESULT STDMETHODCALLTYPE InputRecorder::MultiSourceFrame::get_DepthFrameReferen
 
 
 InputRecorder::InputRecorder(std::string path) 
-	: path(path) 
+	: path(path)
 {
 }
 
 InputRecorder::~InputRecorder() {
-	in.pop(); // gzip_decompressor
-	in.pop(); // ifs
-	ifs.close();
 }
 
 HRESULT STDMETHODCALLTYPE InputRecorder::AcquireLatestFrame(IMultiSourceFrame **multiSourceFrame) {
-	if (in.peek() == EOF) {
+	//qDebug() << "AcquireLatestFrame START";
+	auto t1 = std::chrono::high_resolution_clock::now();
+
+	if (ifs.peek() == EOF) {
 		currentPosition = 0;
 		// seek is not supported!! what now? reopen stream?
 		//in.seekg(headerOffset);
@@ -106,46 +107,72 @@ HRESULT STDMETHODCALLTYPE InputRecorder::AcquireLatestFrame(IMultiSourceFrame **
 		//ifs.seekg(0, std::ios::beg);
 
 		// reopen file :>
-		in.pop();
-		boost::iostreams::close(in);
+		//in.pop();
+		//boost::iostreams::close(in);
 		ifs.close();
 	}
 	if (!ifs.is_open()) {
 		ifs.open(path, std::ifstream::in | std::ifstream::binary);
 		//in.push(boost::iostreams::gzip_decompressor());
-		in.push(ifs);
+		//in.push(ifs);
 		ifs.seekg(0, std::ios::beg);
 	}
 
-	//auto fsize = ifs.tellg();
-	//ifs.seekg(0, std::ios::end);
-	//fsize = ifs.tellg() - fsize;
-	//ifs.seekg(0, std::ios::beg);
+	boost::iostreams::filtering_stream<boost::iostreams::input> inFrame;
+
+	char tmp[20]; // should be plenty
+	ifs.read(tmp, 20);
+	std::string stmp(tmp);
+	if (stmp[0] != 'S') {
+		return S_FALSE;
+	}
+	auto useCompression = stmp[1] == 'C';
+	auto size = std::stoi(stmp.substr(2, 17));
+
+	if (useCompression) {
+		inFrame.push(boost::iostreams::gzip_decompressor());
+		//auto compressed = new char[size];
+		inFrame.push(ifs);
+		//inFrame.push(boost::iostreams::array_source(compressed, size));
+		//ifs.read(compressed, size);
+	}
+	else {
+		inFrame.push(ifs);
+	}
 
 	if (depth2rgb != nullptr) {
 		delete depth2rgb;
 	}
 	auto depth2rgbByteSize = recInfo.depth2rgbByteSize();
 	depth2rgb = new char[depth2rgbByteSize];
-	in.read(depth2rgb, depth2rgbByteSize);
+	inFrame.read(depth2rgb, depth2rgbByteSize);
 
 	if (depth2xyz != nullptr) {
 		delete depth2xyz;
 	}
 	auto depth2xyzByteSize = recInfo.depth2xyzByteSize();
 	depth2xyz = new char[depth2xyzByteSize];
-	in.read(depth2xyz, depth2xyzByteSize);
+	inFrame.read(depth2xyz, depth2xyzByteSize);
 
 	if (rgbimage != nullptr) {
 		delete rgbimage;
 	}
 	auto rgbimageByteSize = recInfo.rgbimageByteSize();
 	rgbimage = new char[rgbimageByteSize];
-	in.read(rgbimage, rgbimageByteSize);
+	inFrame.read(rgbimage, rgbimageByteSize);
 
 	currentPosition++;
 
+	if (useCompression) {
+		//delete compressed;
+	}
+
 	auto msf = new MultiSourceFrame(depth2rgb, depth2xyz, rgbimage, recInfo);
 	*multiSourceFrame = dynamic_cast<IMultiSourceFrame*>(msf);
+
+	auto t2 = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
+	//qDebug() << "AcquireLatestFrame STOP. Took: " << duration << "ms";
+
 	return S_OK;
 }

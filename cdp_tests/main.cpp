@@ -11,6 +11,8 @@
 #include "KinectManager_Windows.h"
 #endif
 
+#define CONFIG_DEFAULT_PATH "config/default.yaml"
+
 int main(int argc, char **argv) {
 
 	QApplication app(argc, argv);
@@ -27,7 +29,7 @@ int main(int argc, char **argv) {
 #endif
 
 	auto conf = Config::instance();
-	conf.parseSimple("config/default.yaml");
+	conf.parseSimple(CONFIG_DEFAULT_PATH);
 	auto inputMode = conf.getValueI("input");
 	auto inputSource = conf.getValue("input_source");
 	if (inputMode == 2) {

@@ -28,9 +28,10 @@ public:
 
   int frameCount = 0; 
 
-private:
   enum LoadingStatus { UNLOADED, KINECT, FILE };
   LoadingStatus loadedKinect = UNLOADED;
+
+private:
 
   KinectManager() {} // Disallow instantiation outside of the class.
 

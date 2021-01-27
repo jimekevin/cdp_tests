@@ -3,6 +3,7 @@
 #include <fstream>
 #include <cstring>
 #include <string>
+#include <boost/algorithm/string.hpp>
 
 bool Config::parseSimple(const std::string& path) {
     std::ifstream conf(path);
@@ -13,6 +14,11 @@ bool Config::parseSimple(const std::string& path) {
 
     std::string line;
     while (std::getline(conf, line)) {
+		std::string lineCopy(line);
+		boost::trim(lineCopy);
+		if (lineCopy.length() == 0) {
+			continue;
+		}
         auto pos = line.find(':');
         auto key = line.substr(0, pos);
         auto value = line.substr(pos + 2);

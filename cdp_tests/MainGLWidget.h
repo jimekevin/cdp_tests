@@ -49,14 +49,22 @@ public slots:
 	void mousePressEvent(QMouseEvent *event);
 	void mouseReleaseEvent(QMouseEvent *event);
 	void mouseMoveEvent(QMouseEvent *event);
+	void showEvent(QShowEvent *event);
 
 	void recordVideo();
+	void enableVideoRecordingCompression(int state);
+
+	void exportSettings();
+
+	void test();
 
 signals:
 	void logMessage(std::string message);
 	void setOutput(QString output);
 	void startedRecordingVideo();
 	void stoppedRecordingVideo();
+	void hideRecordVideoButton();
+	void sliderValuesChanged();
 
 private:
 	// OpenGL State Information
@@ -81,6 +89,7 @@ private:
 	float mapDepth = 2.4f;
 
 	bool videoRecording = false;
+	bool videoRecordingUseCompression = false;
 	int videoRecordingCount = 0;
 	std::string videoRecordingPath;
 	void captureFrame();
